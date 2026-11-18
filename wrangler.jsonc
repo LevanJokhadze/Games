@@ -6,7 +6,7 @@
   "assets": {
     "directory": "./dist",
     "not_found_handling": "single-page-application"
-  }
-  // To serve on your own subdomain, uncomment and edit:
-  // "routes": [{ "pattern": "joker.example.com", "custom_domain": true }]
+  },
+  // Served on this custom domain (lane.ge zone in the same Cloudflare account).
+  "routes": [{ "pattern": "joker.lane.ge", "custom_domain": true }]
 }

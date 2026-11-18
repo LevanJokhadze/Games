@@ -48,7 +48,7 @@ Copy `.env.example` to `.env.local` to set it locally.
    ```
    This builds to `dist/` and uploads it as a static-assets Worker named `joker-frontend`
    (`wrangler.jsonc`), with single-page-app fallback.
-4. Custom subdomain: uncomment `routes` in `wrangler.jsonc`, e.g.
+4. Custom subdomain: `routes` in `wrangler.jsonc` is set to `joker.lane.ge`; change it for another domain, e.g.
    `{ "pattern": "joker.example.com", "custom_domain": true }`, and deploy again. Or add it in the
    dashboard under Workers & Pages → joker-frontend → Settings → Domains & Routes.
 5. Add that origin to `ALLOWED_ORIGINS` in GamesBack and redeploy the backend.
