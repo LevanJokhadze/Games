@@ -9,7 +9,7 @@ import { onPremium } from "../premium";
 import { Avatar } from "./Avatar";
 import { ChatSheet, VoiceControl, sysText } from "./Chat";
 import { Scoreboard, teamTotals } from "./Scoreboard";
-import { bidText, pts } from "../points";
+import { bidBalance, bidText, fillNeeded, pts } from "../points";
 
 interface Props {
   room: RoomView;
@@ -146,11 +146,17 @@ export function Table({ room, send, leave, clockOffset, openMatch, voice }: Prop
   const myKickAt = room.you !== null ? room.seats[room.you]?.afkKickAt ?? null : null;
   const kickLeft = myKickAt ? Math.max(0, Math.ceil((myKickAt - serverNow) / 1000)) : 0;
 
+  const fill = fillNeeded(g);
+  const balance = g.phase === "playing" ? bidBalance(g.bids, g.handSize) : null;
+
   const status = (() => {
     if (g.phase === "gameOver") return t("gameOver");
     const who = names[g.turn];
     if (g.phase === "trump") return myTurn ? t("chooseTrump") : t("waitTrump", { name: who });
-    if (g.phase === "bidding") return myTurn ? t("yourBid") : t("waitBid", { name: who });
+    if (g.phase === "bidding") {
+      const base = myTurn ? t("yourBid") : t("waitBid", { name: who });
+      return fill !== null ? `${base} · ${t("fillNeeds", { n: bidText(fill) })}` : base;
+    }
     if (showing.winner !== null) return t("wonTrick", { name: names[showing.winner] });
     return myTurn ? (selected ? t("tapAgain") : t("yourTurn")) : t("waitPlay", { name: who });
   })();
@@ -164,6 +170,12 @@ export function Table({ room, send, leave, clockOffset, openMatch, voice }: Prop
           <span className="dot">·</span>
           <span>{g.handSize}<span className="hide-narrow"> {t("cards")}</span><span className="show-narrow">🂠</span></span>
         </div>
+        {balance && (
+          <span className={`bid-balance ${balance.kind}`} title={t(balance.kind === "under" ? "underBidHint" : "overBidHint", { n: balance.n })}>
+            <span className="hide-narrow">{t(balance.kind === "under" ? "underBid" : "overBid", { n: balance.n })}</span>
+            <span className="show-narrow">{balance.kind === "under" ? "−" : "+"}{balance.n}</span>
+          </span>
+        )}
         <div className="trump-info" title={t("trump")}>
           <span className="trump-label">{t("trump")}</span>
           {g.phase === "trump" ? <span className="suit-badge">?</span> : <SuitBadge suit={g.trump} />}
@@ -259,6 +271,7 @@ export function Table({ room, send, leave, clockOffset, openMatch, voice }: Prop
               );
             })}
             {g.forbiddenBid !== null && <p className="hint full">{t("dealerCant", { n: bidText(g.forbiddenBid) })}</p>}
+            {fill !== null && <p className="hint full fill-hint">{t("fillHint", { n: bidText(fill) })}</p>}
           </div>
         )}
 

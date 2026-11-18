@@ -2476,3 +2476,49 @@ select {
     zoom: 1.35;
   }
 }
+
+/* ---------- Under-bid (შეტენვა) / over-bid (წაგლეჯვა) ---------- */
+.bid-balance {
+  flex: none;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.bid-balance.under {
+  background: rgba(76, 201, 240, 0.18);
+  color: #8fdcf5;
+  border: 1px solid rgba(76, 201, 240, 0.5);
+}
+.bid-balance.over {
+  background: rgba(255, 107, 107, 0.18);
+  color: #ffb0b0;
+  border: 1px solid rgba(255, 107, 107, 0.5);
+}
+.bal {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+.bal-legend .bal {
+  display: inline;
+  font-size: 0.8rem;
+}
+.bal.under {
+  color: #8fdcf5;
+}
+.bal.over {
+  color: #ffb0b0;
+}
+.fill-hint {
+  color: var(--accent);
+  font-weight: 700;
+}
+@media (max-width: 380px) {
+  .bid-balance {
+    font-size: 0.68rem;
+    padding: 2px 6px;
+  }
+}
