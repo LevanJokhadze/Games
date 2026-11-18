@@ -1899,3 +1899,35 @@ select {
     top: 66%;
   }
 }
+
+/* ---------- Lobby invite link ---------- */
+.invite h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+.invite-row {
+  display: flex;
+  gap: 8px;
+}
+.invite-link {
+  flex: 1;
+  min-width: 0;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--accent);
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--text);
+  font-size: 0.85rem;
+  text-overflow: ellipsis;
+}
+.invite-row .btn {
+  flex: none;
+  min-width: 84px;
+}
+.ok-text {
+  color: var(--ok);
+  margin: 0;
+}
+.lobby-head .btn {
+  white-space: nowrap;
+}
