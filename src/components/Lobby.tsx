@@ -1,15 +1,19 @@
 import { useState } from "react";
 import { useI18n } from "../i18n";
 import type { RoomView } from "../types";
+import type { Voice } from "../voice";
 import { Avatar } from "./Avatar";
+import { ChatBody, VoiceControl } from "./Chat";
+import { pts } from "../points";
 
 interface Props {
   room: RoomView;
   send: (m: object) => void;
   leave: () => void;
+  voice: Voice;
 }
 
-export function Lobby({ room, send, leave }: Props) {
+export function Lobby({ room, send, leave, voice }: Props) {
   const { t } = useI18n();
   const [copied, setCopied] = useState(false);
   const link = `${location.origin}${location.pathname}#/room/${room.code}`;
@@ -144,7 +148,7 @@ export function Lobby({ room, send, leave }: Props) {
             onChange={(e) => send({ t: "config", config: { khishti: Number(e.target.value) } })}
           >
             {[-200, -500, -900].map((v) => (
-              <option key={v} value={v}>{v}</option>
+              <option key={v} value={v}>{pts(v)}</option>
             ))}
           </select>
         </label>
@@ -158,6 +162,11 @@ export function Lobby({ room, send, leave }: Props) {
         ) : (
           <p className="hint">{room.you === null ? t("spectating") : t("onlyHost")}</p>
         )}
+      </section>
+      <section className="panel">
+        <h3>💬 {t("chat")}</h3>
+        <VoiceControl voice={voice} />
+        <ChatBody room={room} send={send} voice={voice} />
       </section>
     </main>
   );

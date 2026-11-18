@@ -63,6 +63,8 @@ export interface Profile {
   wins: number;
   peak: number;
   avatarUrl: string;
+  /** Can log in with nickname + password on another device. */
+  hasPassword?: boolean;
 }
 
 export interface RatingChange {
@@ -80,6 +82,25 @@ export interface SeatView {
   connected: boolean;
   host: boolean;
   you: boolean;
+  /** A bot is playing for them; they are removed from the match at this time unless they come back. */
+  afkKickAt: number | null;
+  /** Removed from the match for not coming back; a bot plays the seat. */
+  left: boolean;
+}
+
+/** Server notice in the chat. */
+export interface SysNotice {
+  kind: "warn" | "afk" | "back" | "kicked";
+  name: string;
+  penalty?: number;
+}
+
+export interface ChatLine {
+  seat: number | null;
+  name: string;
+  text: string;
+  at: number;
+  sys?: SysNotice;
 }
 
 export interface GameConfig {
@@ -96,13 +117,29 @@ export interface RoomView {
   you: number | null;
   config: GameConfig;
   deadline: number | null;
+  /** "warn" while the player to act is in their extra minute. */
+  turnStage: "turn" | "warn";
   serverTime: number;
-  chat: { seat: number | null; name: string; text: string; at: number }[];
+  chat: ChatLine[];
   seats: (SeatView | null)[];
   game: GameView | null;
   ratingChanges: (RatingChange | null)[] | null;
   matchId: string | null;
   accounts: boolean;
+  /** Your public id among `people`. */
+  peer: string;
+  /** Everyone connected: players and spectators. */
+  people: Person[];
+}
+
+export interface Person {
+  peer: string;
+  name: string;
+  avatarUrl: string | null;
+  /** null = watching */
+  seat: number | null;
+  /** Joined the voice chat. */
+  voice: boolean;
 }
 
 export interface GameRecord {

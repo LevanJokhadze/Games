@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { fetchMe, register, setToken, useRoom } from "./api";
+import { ApiError, fetchMe, login, register, setToken, useRoom } from "./api";
 import { MatchPage, PlayerPage } from "./components/History";
 import { Home } from "./components/Home";
-import { ProfileForm } from "./components/ProfileForm";
+import { PasswordField, ProfileForm } from "./components/ProfileForm";
 import { Lobby } from "./components/Lobby";
 import { Table } from "./components/Table";
 import { Lang, LangContext, makeT, useI18n } from "./i18n";
 import { useTheme } from "./theme";
+import { useVoice } from "./voice";
 import type { Profile } from "./types";
 
 function load(key: string, fallback: string): string {
@@ -57,6 +58,14 @@ export function App() {
   });
   const [me, setMe] = useState<Profile | null | undefined>(undefined);
   const [meError, setMeError] = useState(false);
+  useEffect(() => {
+    if (!me) return;
+    try {
+      localStorage.setItem("joker.hadAccount", "1");
+    } catch {
+      /* ignore */
+    }
+  }, [me]);
   const [theme, setTheme] = useTheme();
 
   const loadMe = () => {
@@ -144,7 +153,7 @@ export function App() {
         ) : route.page === "player" ? (
           <PlayerPage key={route.id} id={route.id} me={me} back={back} openMatch={(id) => nav(`#/match/${id}`)} />
         ) : (
-          <Home me={me} setMe={setMe} go={go} nav={nav} theme={theme} setTheme={setTheme} />
+          <Home me={me} setMe={setMe} onLogout={() => setMe(null)} go={go} nav={nav} theme={theme} setTheme={setTheme} />
         )}
       </div>
     </LangContext.Provider>
@@ -153,17 +162,70 @@ export function App() {
 
 function RegisterScreen({ onDone }: { onDone: (p: Profile) => void }) {
   const { t } = useI18n();
+  const [mode, setMode] = useState<"register" | "login">(() => {
+    try {
+      return localStorage.getItem("joker.hadAccount") ? "login" : "register";
+    } catch {
+      return "register";
+    }
+  });
   return (
     <main className="home register">
       <div className="home-hero small">
         <h1>{t("title")}</h1>
-        <p className="tagline">{t("registerTitle")}</p>
+        <p className="tagline">{mode === "login" ? t("loginTitle") : t("registerTitle")}</p>
       </div>
       <section className="panel">
-        <p className="hint left">{t("registerHint")}</p>
-        <ProfileForm submitLabel={t("register")} onSubmit={async (p) => onDone(await register(p))} />
+        {mode === "login" ? (
+          <LoginForm onDone={onDone} />
+        ) : (
+          <>
+            <p className="hint left">{t("registerHint")}</p>
+            <ProfileForm password="required" submitLabel={t("register")} onSubmit={async (p) => onDone(await register(p))} />
+          </>
+        )}
+        <button type="button" className="link-btn switch-auth" onClick={() => setMode(mode === "login" ? "register" : "login")}>
+          {mode === "login" ? t("noAccount") : t("haveAccount")}
+        </button>
       </section>
     </main>
+  );
+}
+
+function LoginForm({ onDone }: { onDone: (p: Profile) => void }) {
+  const { t } = useI18n();
+  const [nickname, setNickname] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nickname.trim() || !password) {
+      setErr(t("wrongLogin"));
+      return;
+    }
+    setBusy(true);
+    setErr(null);
+    try {
+      onDone(await login(nickname.trim(), password));
+    } catch (e2) {
+      setErr(e2 instanceof ApiError ? (e2.status === 429 ? t("tooManyTries") : e2.status === 400 ? t("wrongLogin") : e2.message) : t("errorCreate"));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <form className="profile-form" onSubmit={submit} noValidate>
+      <label className="field">
+        <span>{t("nickname")}</span>
+        <input value={nickname} onChange={(e) => setNickname(e.target.value.replace(/\s/g, ""))} maxLength={20} autoComplete="username" autoCapitalize="off" spellCheck={false} autoFocus />
+      </label>
+      <PasswordField label={t("password")} value={password} onChange={setPassword} autoComplete="current-password" />
+      {err && <p className="error-text">{err}</p>}
+      <button className="btn btn-primary btn-big" type="submit" disabled={busy}>
+        {t("login")}
+      </button>
+    </form>
   );
 }
 
@@ -178,7 +240,8 @@ function LangToggle() {
 
 function RoomScreen({ code, name, leave, autostart, openMatch, onAuthError }: { code: string; name: string; leave: () => void; autostart: React.MutableRefObject<boolean>; openMatch: (id: string) => void; onAuthError: () => void }) {
   const { t } = useI18n();
-  const { room, status, error, clearError, send, clockOffset } = useRoom(code, name, onAuthError);
+  const { room, status, error, clearError, send, clockOffset, subscribe } = useRoom(code, name, onAuthError);
+  const voice = useVoice(room, send, subscribe);
 
   useEffect(() => {
     if (room && autostart.current && room.status === "lobby" && room.isHost) {
@@ -208,9 +271,9 @@ function RoomScreen({ code, name, leave, autostart, openMatch, onAuthError }: { 
       {status !== "open" && <div className="conn-banner">{t("reconnecting")}</div>}
       {error && <div className="toast" role="alert">{error}</div>}
       {room.status === "lobby" ? (
-        <Lobby room={room} send={send} leave={leave} />
+        <Lobby room={room} send={send} leave={leave} voice={voice} />
       ) : (
-        <Table room={room} send={send} leave={leave} clockOffset={clockOffset.current} openMatch={openMatch} />
+        <Table room={room} send={send} leave={leave} clockOffset={clockOffset.current} openMatch={openMatch} voice={voice} />
       )}
     </>
   );
