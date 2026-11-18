@@ -2476,3 +2476,230 @@ select {
     zoom: 1.35;
   }
 }
+
+/* ---------- Bura ---------- */
+.game-switch {
+  margin-bottom: 2px;
+}
+.stake-chip {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-radius: 8px;
+  padding: 1px 7px;
+  font-weight: 800;
+}
+.stock-count {
+  font-size: 0.8rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.bura-trick {
+  --tw: min(11vw, 8.5vh, 66px);
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  transform: translate(-50%, -50%);
+  display: grid;
+  grid-template-areas:
+    ". top ."
+    "left mid right"
+    ". bottom .";
+  --n: 1;
+  --gw: calc(var(--tw) * (1 + 0.4 * (var(--n) - 1)));
+  grid-template-columns: var(--gw) calc(var(--tw) * 0.25) var(--gw);
+  grid-template-rows: repeat(3, calc(var(--tw) * 1.45));
+  align-items: center;
+  justify-items: center;
+  gap: 4px 6px;
+  z-index: 1;
+  pointer-events: none;
+}
+.bt-group {
+  display: flex;
+  animation: deal-in 0.18s ease-out;
+  transition: opacity 0.35s ease;
+}
+.bt-group .card + .card,
+.bt-group .own-down + .card,
+.bt-group .card + .own-down,
+.bt-group .own-down + .own-down {
+  margin-left: calc(var(--tw) * -0.6);
+}
+.bt-group .card-md {
+  --tw: inherit;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+.bt-group.area-top {
+  grid-area: top;
+}
+.bt-group.area-bottom {
+  grid-area: bottom;
+}
+.bt-group.area-left {
+  grid-area: left;
+}
+.bt-group.area-right {
+  grid-area: right;
+}
+.bt-group.best .card:not(.card-back) {
+  box-shadow: 0 0 0 2px var(--accent), 0 0 16px rgba(245, 179, 1, 0.55);
+}
+.bura-trick.done .bt-group.beaten {
+  opacity: 0.55;
+}
+.own-down {
+  display: block;
+  opacity: 0.6;
+  filter: grayscale(0.5);
+}
+.round-result {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: min(300px, 86vw);
+  max-width: 92vw;
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--panel) 100%, #000 0%);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 2px solid var(--panel-border);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.55);
+  text-align: center;
+  animation: pop-up 0.25s ease-out;
+}
+.rr-match small {
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin: 0 8px;
+  vertical-align: middle;
+  color: var(--muted);
+}
+.round-result.us {
+  border-color: var(--accent);
+}
+.round-result.them {
+  border-color: color-mix(in srgb, var(--team-1) 60%, transparent);
+}
+.rr-how {
+  margin: 0;
+  font-weight: 700;
+}
+.rr-cards {
+  display: flex;
+  gap: 3px;
+}
+.rr-main {
+  font-size: 1.1rem;
+}
+.rr-match {
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+.rr-points {
+  color: var(--muted);
+}
+.bura-actions {
+  flex-direction: column;
+  align-items: stretch;
+  max-width: 520px;
+  width: 100%;
+  margin: 0 auto;
+}
+.raise-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+.raise-row .btn {
+  flex: 1 1 auto;
+  min-height: 46px;
+}
+.raise-row .play-btn {
+  flex: 1 1 40%;
+  font-size: 1.05rem;
+}
+.raise-box {
+  background: var(--panel);
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  padding: 10px;
+  text-align: center;
+}
+.raise-box p {
+  margin: 0 0 8px;
+  font-weight: 700;
+}
+.bura-btn {
+  animation: pulse-glow 1.2s ease-in-out infinite alternate;
+}
+@keyframes pulse-glow {
+  to {
+    box-shadow: 0 0 0 3px var(--accent), 0 0 24px rgba(245, 179, 1, 0.7);
+  }
+}
+.cut-note,
+.crawford-note {
+  top: 48%;
+  font-size: 0.9rem;
+  padding: 6px 12px;
+}
+.crawford-note {
+  background: var(--panel);
+  color: var(--text);
+  font-weight: 600;
+  top: auto;
+  bottom: 4px;
+}
+.bura-rounds td.won {
+  color: var(--accent);
+  font-weight: 800;
+}
+.bura-rounds th.team-0 {
+  box-shadow: inset 0 -3px 0 var(--team-0);
+}
+.bura-rounds th.team-1 {
+  box-shadow: inset 0 -3px 0 var(--team-1);
+}
+@media (orientation: portrait) {
+  .bura-trick {
+    top: 56%;
+  }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .bura-trick {
+    --tw: min(7vw, 13vh, 56px);
+    gap: 2px 4px;
+  }
+  .raise-row .btn {
+    min-height: 38px;
+  }
+}
+@media (min-width: 900px) and (min-height: 640px) {
+  .bura-trick {
+    --tw: min(6.5vw, 10vh, 110px);
+  }
+  .round-result {
+    zoom: 1.25;
+  }
+}
+/* Short phones (iPhone SE and similar): smaller trick cards so the top player stays clear. */
+@media (orientation: portrait) and (max-height: 720px) {
+  .bura-trick {
+    --tw: min(10vw, 6.2vh, 60px);
+    top: 61%;
+    gap: 2px 4px;
+  }
+  /* Everyone holds the same number of cards in Bura, so the card backs can go. */
+  .bura .badge-cards {
+    display: none;
+  }
+}

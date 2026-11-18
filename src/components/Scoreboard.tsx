@@ -1,5 +1,5 @@
 import { useI18n } from "../i18n";
-import type { PulkaResult, RoomView } from "../types";
+import type { GameView, PulkaResult, RoomView } from "../types";
 import { onPremium } from "../premium";
 import { Modal } from "./Modal";
 import { bidText, pts } from "../points";
@@ -131,7 +131,7 @@ export function scheduleFromPulkas(pulkas: PulkaResult[]): number[][] {
 
 export function Scoreboard({ room, onClose }: { room: RoomView; onClose: () => void }) {
   const { t } = useI18n();
-  const g = room.game!;
+  const g = room.game as GameView;
   const names = room.seats.map((s, i) => s?.name ?? `#${i + 1}`);
   return (
     <Modal title={t("scores")} onClose={onClose} wide>

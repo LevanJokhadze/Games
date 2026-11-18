@@ -5,6 +5,7 @@ import { Home } from "./components/Home";
 import { PasswordField, ProfileForm } from "./components/ProfileForm";
 import { Lobby } from "./components/Lobby";
 import { Table } from "./components/Table";
+import { BuraTable } from "./components/BuraTable";
 import { Lang, LangContext, makeT, useI18n } from "./i18n";
 import { useTheme } from "./theme";
 import { useVoice } from "./voice";
@@ -272,6 +273,8 @@ function RoomScreen({ code, name, leave, autostart, openMatch, onAuthError }: { 
       {error && <div className="toast" role="alert">{error}</div>}
       {room.status === "lobby" ? (
         <Lobby room={room} send={send} leave={leave} voice={voice} />
+      ) : room.game?.kind === "bura" ? (
+        <BuraTable room={room} send={send} leave={leave} clockOffset={clockOffset.current} openMatch={openMatch} voice={voice} />
       ) : (
         <Table room={room} send={send} leave={leave} clockOffset={clockOffset.current} openMatch={openMatch} voice={voice} />
       )}

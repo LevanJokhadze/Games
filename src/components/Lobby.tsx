@@ -18,6 +18,8 @@ export function Lobby({ room, send, leave, voice }: Props) {
   const [copied, setCopied] = useState(false);
   const link = `${location.origin}${location.pathname}#/room/${room.code}`;
 
+  const game = room.config.game ?? "joker";
+  const bura = game === "bura";
   const canShare = typeof navigator !== "undefined" && !!navigator.share;
 
   const copy = async () => {
@@ -112,6 +114,25 @@ export function Lobby({ room, send, leave, voice }: Props) {
 
       <section className="panel">
         <div className="field">
+          <span>{t("chooseGame")}</span>
+          <div className="segmented" role="radiogroup" aria-label={t("chooseGame")}>
+            {(["joker", "bura"] as const).map((g) => (
+              <button
+                key={g}
+                role="radio"
+                aria-checked={game === g}
+                className={game === g ? "on" : ""}
+                disabled={!room.isHost}
+                onClick={() => send({ t: "config", config: { game: g } })}
+              >
+                {g === "joker" ? `★ ${t("gameJoker")}` : `🂡 ${t("gameBura")}`}
+              </button>
+            ))}
+          </div>
+          {bura && <p className="hint left">{t("buraHint")}</p>}
+        </div>
+        {!bura && (<>
+        <div className="field">
           <span>{t("pairs")}</span>
           <div className="segmented" role="radiogroup" aria-label={t("pairs")}>
             {[false, true].map((v) => (
@@ -152,6 +173,7 @@ export function Lobby({ room, send, leave, voice }: Props) {
             ))}
           </select>
         </label>
+        </>)}
         {room.isHost ? (
           <>
             <button className="btn btn-primary btn-big" onClick={() => send({ t: "start" })}>

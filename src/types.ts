@@ -31,6 +31,7 @@ export interface PulkaResult {
 }
 
 export interface GameView {
+  kind?: "joker";
   phase: "trump" | "bidding" | "playing" | "gameOver";
   schedule: number[][];
   pulka: number;
@@ -103,7 +104,11 @@ export interface ChatLine {
   sys?: SysNotice;
 }
 
+export type GameKind = "joker" | "bura";
+
 export interface GameConfig {
+  /** Which card game the room plays (older rooms: Joker). */
+  game?: GameKind;
   mode: "standard" | "nines";
   khishti: number;
   /** Partners sit opposite: seats 0 & 2 against 1 & 3. */
@@ -122,7 +127,7 @@ export interface RoomView {
   serverTime: number;
   chat: ChatLine[];
   seats: (SeatView | null)[];
-  game: GameView | null;
+  game: GameView | BuraView | null;
   ratingChanges: (RatingChange | null)[] | null;
   matchId: string | null;
   accounts: boolean;
@@ -174,4 +179,65 @@ export interface Match {
   pairs: boolean;
   players: MatchPlayer[];
   pulkas: PulkaResult[];
+}
+
+// ---------- Bura (5 cards, in pairs) ----------
+
+export interface BuraPlay {
+  seat: number;
+  /** null = a face-down card you can't see. */
+  cards: (Card | null)[];
+  up: boolean[];
+}
+
+export interface BuraRaise {
+  by: number;
+  leader: number;
+  to: number;
+  stage: "partner" | "answer" | "answerPartner";
+  answerer: number | null;
+  answer: "raise" | "fold" | null;
+}
+
+export interface BuraRound {
+  dealer: number;
+  trump: Suit;
+  points: [number, number] | null;
+  winner: number | null;
+  value: number;
+  stake: number;
+  how: "points" | "tie" | "bura" | "fold";
+  seat: number | null;
+  bura: Card[] | null;
+  match: [number, number];
+}
+
+export interface BuraView {
+  kind: "bura";
+  phase: "playing" | "roundOver" | "gameOver";
+  round: number;
+  target: number;
+  match: [number, number];
+  cut: Card | null;
+  dealer: number;
+  turn: number;
+  trump: Suit;
+  trumpCard: Card | null;
+  stockCount: number;
+  handCounts: number[];
+  hand: Card[];
+  pileCounts: [number, number];
+  trick: { leader: number; size: number; best: number; malyutka: number | null; topUps: number[]; plays: BuraPlay[] } | null;
+  lastTrick: { winner: number; plays: BuraPlay[] } | null;
+  stake: number;
+  lastRaiseTeam: number | null;
+  raise: BuraRaise | null;
+  crawford: boolean;
+  rounds: BuraRound[];
+  need: "lead" | "answer" | "topUp" | "approve" | "respond" | null;
+  cardsNeeded: number;
+  canRaise: boolean;
+  canBura: boolean;
+  canMalyutka: boolean;
+  canRaiseAgain: boolean;
 }

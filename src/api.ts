@@ -117,8 +117,8 @@ export async function fetchMatch(id: string): Promise<Match> {
   return (await api<{ match: Match }>(`/api/games/${encodeURIComponent(id)}`)).match;
 }
 
-export async function createRoom(): Promise<string> {
-  const res = await fetch(`${API_URL}/api/rooms`, { method: "POST" });
+export async function createRoom(game: "joker" | "bura" = "joker"): Promise<string> {
+  const res = await fetch(`${API_URL}/api/rooms`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ game }) });
   if (!res.ok) throw new Error("create failed");
   return ((await res.json()) as { code: string }).code;
 }
