@@ -2522,3 +2522,47 @@ select {
     padding: 2px 6px;
   }
 }
+
+/* ---------- Voice connection state ---------- */
+.voice-status {
+  flex-basis: 100%;
+  margin: 2px 0 0;
+  font-size: 0.8rem;
+}
+.voice-status.link-connected {
+  color: var(--ok);
+}
+.voice-status.link-failed {
+  color: var(--danger);
+}
+.voice-status.link-connecting {
+  color: var(--accent);
+}
+.voice-mark.link-connecting {
+  opacity: 0.5;
+}
+.voice-mark.link-failed {
+  filter: grayscale(1);
+  text-decoration: line-through;
+}
+.ptt {
+  position: relative;
+}
+.link-dot {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 0, 0, 0.5);
+}
+.link-dot.link-connected {
+  background: var(--ok);
+}
+.link-dot.link-connecting {
+  background: var(--accent);
+}
+.link-dot.link-failed {
+  background: var(--danger);
+}
