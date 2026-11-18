@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Static site served from Cloudflare Workers (no server code).
+  "name": "joker-frontend",
+  "compatibility_date": "2025-11-01",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  }
+  // To serve on your own subdomain, uncomment and edit:
+  // "routes": [{ "pattern": "joker.example.com", "custom_domain": true }]
+}
