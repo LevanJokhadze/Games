@@ -2522,3 +2522,15 @@ select {
     padding: 2px 6px;
   }
 }
+
+/* ---------- Sounds ---------- */
+.sound-toggle {
+  width: 100%;
+  justify-content: center;
+}
+.sound-toggle.on {
+  border-color: var(--ok);
+}
+.rules-top {
+  margin-bottom: 12px;
+}

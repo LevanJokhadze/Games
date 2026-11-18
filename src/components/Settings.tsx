@@ -2,6 +2,7 @@ import { useI18n } from "../i18n";
 import { BACKS, BOARDS, DECKS, Theme } from "../theme";
 import { CardView } from "./CardView";
 import { Modal } from "./Modal";
+import { SoundToggle } from "./SoundToggle";
 
 const BOARD_LABEL: Record<string, [string, string]> = {
   felt: ["Green felt", "მწვანე მაუდი"],
@@ -22,6 +23,9 @@ export function Settings({ theme, setTheme, onClose }: { theme: Theme; setTheme:
   const L = (m: Record<string, [string, string]>, k: string) => m[k][lang === "ka" ? 1 : 0];
   return (
     <Modal title={`🎨 ${t("settings")}`} onClose={onClose}>
+      <section className="setting">
+        <SoundToggle />
+      </section>
       <section className="setting">
         <h4>{t("board")}</h4>
         <div className="swatches">
