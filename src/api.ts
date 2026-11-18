@@ -1,11 +1,104 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { RoomView } from "./types";
+import type { GameRecord, Match, Profile, RoomView } from "./types";
 
 const envUrl = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, "");
 export const API_URL =
   envUrl || (location.hostname === "localhost" || /^\d+\.\d+\.\d+\.\d+$/.test(location.hostname)
     ? `${location.protocol}//${location.hostname}:8787`
     : location.origin);
+
+/** Turns a server-relative URL (avatars) into an absolute one. */
+export function absUrl(u: string | null | undefined): string | null {
+  if (!u) return null;
+  return u.startsWith("/") ? `${API_URL}${u}` : u;
+}
+
+const TOKEN_KEY = "joker.token";
+
+export function getToken(): string | null {
+  try {
+    return localStorage.getItem(TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function setToken(token: string | null): void {
+  try {
+    if (token) localStorage.setItem(TOKEN_KEY, token);
+    else localStorage.removeItem(TOKEN_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+export class ApiError extends Error {
+  constructor(message: string, public status: number) {
+    super(message);
+  }
+}
+
+async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const token = getToken();
+  const headers: Record<string, string> = { ...(init.headers as Record<string, string>) };
+  if (init.body) headers["Content-Type"] = "application/json";
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  const res = await fetch(`${API_URL}${path}`, { ...init, headers });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new ApiError(body.error ?? `HTTP ${res.status}`, res.status);
+  return body as T;
+}
+
+export interface ProfileInput {
+  nickname: string;
+  firstName: string;
+  lastName: string;
+  avatar?: string;
+}
+
+export async function register(p: ProfileInput): Promise<Profile> {
+  const r = await api<{ token: string; user: Profile }>("/api/register", { method: "POST", body: JSON.stringify(p) });
+  setToken(r.token);
+  return r.user;
+}
+
+export async function fetchMe(): Promise<Profile | null> {
+  if (!getToken()) return null;
+  try {
+    return (await api<{ user: Profile }>("/api/me")).user;
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 401) {
+      setToken(null);
+      return null;
+    }
+    throw e;
+  }
+}
+
+export async function updateMe(p: Partial<ProfileInput>): Promise<Profile> {
+  return (await api<{ user: Profile }>("/api/me", { method: "PUT", body: JSON.stringify(p) })).user;
+}
+
+export async function fetchLeaderboard(): Promise<(Profile & { rank: number })[]> {
+  return (await api<{ players: (Profile & { rank: number })[] }>("/api/leaderboard?limit=100")).players;
+}
+
+export async function fetchUser(id: string): Promise<{ user: Profile; games: GameRecord[] }> {
+  return api(`/api/users/${encodeURIComponent(id)}`);
+}
+
+export const HISTORY_PAGE = 20;
+
+/** A page of a player's games, newest first; pass the last game's finishedAt to get the next page. */
+export async function fetchUserGames(id: string, before?: string): Promise<GameRecord[]> {
+  const q = new URLSearchParams({ limit: String(HISTORY_PAGE) });
+  if (before) q.set("before", before);
+  return (await api<{ games: GameRecord[] }>(`/api/users/${encodeURIComponent(id)}/games?${q}`)).games;
+}
+
+export async function fetchMatch(id: string): Promise<Match> {
+  return (await api<{ match: Match }>(`/api/games/${encodeURIComponent(id)}`)).match;
+}
 
 export async function createRoom(): Promise<string> {
   const res = await fetch(`${API_URL}/api/rooms`, { method: "POST" });
@@ -40,7 +133,7 @@ export function playerId(): string {
 export type Status = "connecting" | "open" | "closed" | "notfound";
 
 /** Connects to a room, keeps the connection alive and reconnects on drops. */
-export function useRoom(code: string, name: string) {
+export function useRoom(code: string, name: string, onAuthError?: () => void) {
   const [room, setRoom] = useState<RoomView | null>(null);
   const [status, setStatus] = useState<Status>("connecting");
   const [error, setError] = useState<string | null>(null);
@@ -61,7 +154,7 @@ export function useRoom(code: string, name: string) {
       ws.onopen = () => {
         retry = 0;
         setStatus("open");
-        ws.send(JSON.stringify({ t: "hello", playerId: playerId(), name }));
+        ws.send(JSON.stringify({ t: "hello", token: getToken(), playerId: playerId(), name }));
         ping = window.setInterval(() => ws.readyState === 1 && ws.send(JSON.stringify({ t: "ping" })), 25_000);
       };
       ws.onmessage = (e) => {
@@ -70,7 +163,8 @@ export function useRoom(code: string, name: string) {
           clockOffset.current = m.room.serverTime - Date.now();
           setRoom(m.room);
         } else if (m.t === "error") {
-          setError(m.message);
+          if (m.code === "auth") onAuthError?.();
+          else setError(m.message);
         }
       };
       ws.onclose = async (e) => {

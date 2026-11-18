@@ -1,20 +1,32 @@
 import { useState } from "react";
-import { createRoom } from "../api";
+import { createRoom, getToken, updateMe } from "../api";
 import { useI18n } from "../i18n";
+import type { Theme } from "../theme";
+import type { Profile } from "../types";
+import { Avatar } from "./Avatar";
+import { Leaderboard } from "./Leaderboard";
+import { Modal } from "./Modal";
+import { ProfileForm } from "./ProfileForm";
 import { Rules } from "./Rules";
+import { Settings } from "./Settings";
 
 interface Props {
-  name: string;
-  setName: (n: string) => void;
+  me: Profile;
+  setMe: (p: Profile) => void;
   go: (code: string, autostart?: boolean) => void;
+  nav: (hash: string) => void;
+  theme: Theme;
+  setTheme: (t: Partial<Theme>) => void;
 }
 
-export function Home({ name, setName, go }: Props) {
+type Sheet = null | "rules" | "leaderboard" | "settings" | "profile";
+
+export function Home({ me, setMe, go, nav, theme, setTheme }: Props) {
   const { t } = useI18n();
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [rules, setRules] = useState(false);
+  const [sheet, setSheet] = useState<Sheet>(null);
 
   const create = async (autostart: boolean) => {
     setBusy(true);
@@ -32,6 +44,14 @@ export function Home({ name, setName, go }: Props) {
 
   return (
     <main className="home">
+      <button className="me-chip" onClick={() => setSheet("profile")} aria-label={t("profile")}>
+        <Avatar url={me.avatarUrl} name={me.nickname} size={36} />
+        <span className="me-chip-text">
+          <strong>{me.nickname}</strong>
+          <small>{me.rating} · {t("rating")}</small>
+        </span>
+      </button>
+
       <div className="home-hero">
         <div className="logo-cards" aria-hidden>
           <span className="lc lc1">A♠</span>
@@ -43,17 +63,6 @@ export function Home({ name, setName, go }: Props) {
       </div>
 
       <section className="panel home-panel">
-        <label className="field">
-          <span>{t("yourName")}</span>
-          <input
-            value={name}
-            maxLength={18}
-            placeholder={t("namePlaceholder")}
-            onChange={(e) => setName(e.target.value)}
-            autoComplete="nickname"
-            enterKeyHint="done"
-          />
-        </label>
         <button className="btn btn-primary btn-big" disabled={busy} onClick={() => create(true)}>
           {t("playBots")}
         </button>
@@ -83,11 +92,69 @@ export function Home({ name, setName, go }: Props) {
           </button>
         </form>
         {err && <p className="error-text">{err}</p>}
-        <button className="link-btn" onClick={() => setRules(true)}>
+      </section>
+
+      <nav className="home-tiles">
+        <button className="tile" onClick={() => setSheet("leaderboard")}>
+          <span aria-hidden>🏆</span>
+          {t("leaderboard")}
+        </button>
+        <button className="tile" onClick={() => nav(`#/player/${me.id}`)}>
+          <span aria-hidden>📜</span>
+          {t("matchHistory")}
+        </button>
+        <button className="tile" onClick={() => setSheet("settings")}>
+          <span aria-hidden>🎨</span>
+          {t("settings")}
+        </button>
+        <button className="tile" onClick={() => setSheet("rules")}>
+          <span aria-hidden>📖</span>
           {t("rules")}
         </button>
-      </section>
-      {rules && <Rules onClose={() => setRules(false)} />}
+      </nav>
+
+      {sheet === "rules" && <Rules onClose={() => setSheet(null)} />}
+      {sheet === "leaderboard" && <Leaderboard me={me} onClose={() => setSheet(null)} openPlayer={(id) => nav(`#/player/${id}`)} />}
+      {sheet === "settings" && <Settings theme={theme} setTheme={setTheme} onClose={() => setSheet(null)} />}
+      {sheet === "profile" && <ProfileSheet me={me} setMe={setMe} onClose={() => setSheet(null)} />}
     </main>
+  );
+}
+
+function ProfileSheet({ me, setMe, onClose }: { me: Profile; setMe: (p: Profile) => void; onClose: () => void }) {
+  const { t } = useI18n();
+  const [copied, setCopied] = useState(false);
+  const link = `${location.origin}${location.pathname}#/key/${getToken() ?? ""}`;
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      prompt(t("deviceLink"), link);
+    }
+  };
+  return (
+    <Modal title={t("editProfile")} onClose={onClose}>
+      <div className="player-stats center">
+        <span><strong>{me.rating}</strong> {t("rating")}</span>
+        <span><strong>{me.peak}</strong> {t("peak")}</span>
+        <span><strong>{me.games}</strong> {t("games")}</span>
+        <span><strong>{me.wins}</strong> {t("wins")}</span>
+      </div>
+      <ProfileForm
+        initial={me}
+        submitLabel={t("save")}
+        onSubmit={async (p) => {
+          setMe(await updateMe(p));
+          onClose();
+        }}
+      />
+      <section className="device-link">
+        <h4>{t("deviceLink")}</h4>
+        <p className="hint left">{t("deviceLinkHint")}</p>
+        <button className="btn" onClick={copy}>{copied ? `✓ ${t("copied")}` : `🔑 ${t("copyLink")}`}</button>
+      </section>
+    </Modal>
   );
 }

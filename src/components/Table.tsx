@@ -4,13 +4,15 @@ import type { Card, JokerMode, Play, RoomView, Suit } from "../types";
 import { CardBack, CardView, SUIT_SYMBOL, SuitBadge, isRed } from "./CardView";
 import { Modal } from "./Modal";
 import { Rules } from "./Rules";
-import { Scoreboard } from "./Scoreboard";
+import { Avatar } from "./Avatar";
+import { Scoreboard, teamTotals } from "./Scoreboard";
 
 interface Props {
   room: RoomView;
   send: (m: object) => void;
   leave: () => void;
   clockOffset: number;
+  openMatch: (id: string) => void;
 }
 
 const POS = ["bottom", "left", "top", "right"] as const;
@@ -28,7 +30,7 @@ function useNow(active: boolean) {
 
 const canHover = typeof window !== "undefined" && window.matchMedia?.("(hover: hover) and (pointer: fine)").matches;
 
-export function Table({ room, send, leave, clockOffset }: Props) {
+export function Table({ room, send, leave, clockOffset, openMatch }: Props) {
   const { t } = useI18n();
   const g = room.game!;
   const me = room.you ?? 0;
@@ -116,9 +118,9 @@ export function Table({ room, send, leave, clockOffset }: Props) {
           {g.phase === "trump" ? <span className="suit-badge">?</span> : <SuitBadge suit={g.trump} />}
           {g.trumpCard && <CardView card={g.trumpCard} size="sm" />}
         </div>
-        <button className="btn btn-small" onClick={() => setShowScores(true)}>{t("scores")}</button>
         <button className="icon-btn" onClick={() => setShowRules(true)} aria-label={t("rules")}>?</button>
       </header>
+      <ScoreStrip room={room} onOpen={() => setShowScores(true)} />
 
       <div className="felt">
         {[1, 2, 3].map((r) => {
@@ -199,7 +201,7 @@ export function Table({ room, send, leave, clockOffset }: Props) {
       {showScores && <Scoreboard room={room} onClose={() => setShowScores(false)} />}
       {showRules && <Rules onClose={() => setShowRules(false)} />}
       {room.status === "finished" && !showScores && (
-        <GameOver room={room} send={send} leave={leave} openScores={() => setShowScores(true)} />
+        <GameOver room={room} send={send} leave={leave} openScores={() => setShowScores(true)} openMatch={openMatch} />
       )}
     </main>
   );
@@ -222,8 +224,10 @@ function PlayerBadge({ pos, room, seat, timer, compact }: { pos: string; room: R
   const bid = g.bids[seat];
   const active = g.turn === seat && g.phase !== "gameOver";
   const count = g.handCounts[seat];
+  const pairs = room.config.pairs;
+  const partner = pairs && room.you !== null && seat === (room.you + 2) % 4;
   return (
-    <div className={`badge badge-${pos} ${active ? "active" : ""} ${compact ? "compact" : ""} ${s && !s.connected ? "offline" : ""}`}>
+    <div className={`badge badge-${pos} ${active ? "active" : ""} ${compact ? "compact" : ""} ${s && !s.connected ? "offline" : ""} ${pairs ? `team-${seat % 2}` : ""}`}>
       {!compact && (
         <div className="badge-cards" aria-label={`${count} ${t("cards")}`}>
           {Array.from({ length: Math.min(count, 9) }, (_, i) => (
@@ -233,10 +237,11 @@ function PlayerBadge({ pos, room, seat, timer, compact }: { pos: string; room: R
       )}
       <div className="badge-main">
         <div className="badge-name">
+          {!compact && <Avatar url={s?.avatarUrl} name={s?.name ?? "?"} bot={s?.bot} size={22} />}
           {g.dealer === seat && <span className="dealer-chip" title={t("dealer")}>D</span>}
           <span className="name-text">{s?.name ?? "—"}</span>
-          {s?.bot && <span className="bot-chip">🤖</span>}
         </div>
+        {partner && <div className="partner-tag">{t("partner")}</div>}
         <div className="badge-stats">
           <span className={`bid-took ${bid !== null && g.took[seat] === bid ? "ok" : ""} ${bid !== null && g.took[seat] > bid ? "over" : ""}`}>
             {bid === null ? "–" : bid} / {g.took[seat]}
@@ -328,25 +333,96 @@ function JokerDialog({ leading, onChoose, onCancel }: { leading: boolean; onChoo
   );
 }
 
-function GameOver({ room, send, leave, openScores }: { room: RoomView; send: (m: object) => void; leave: () => void; openScores: () => void }) {
+/** Always-visible running score: every player (or both teams) and their points. Tap for the full sheet. */
+function ScoreStrip({ room, onOpen }: { room: RoomView; onOpen: () => void }) {
   const { t } = useI18n();
   const g = room.game!;
-  const order = [0, 1, 2, 3].sort((a, b) => g.totals[b] - g.totals[a]);
-  const winner = room.seats[order[0]]?.name ?? "";
+  const me = room.you ?? 0;
+  const order = [0, 1, 2, 3].map((r) => (me + r) % 4);
+  const best = Math.max(...g.totals);
+  const name = (i: number) => room.seats[i]?.name ?? `#${i + 1}`;
+  if (room.config.pairs) {
+    const team = teamTotals(g.totals);
+    const mine = me % 2;
+    return (
+      <button className="score-strip pairs" onClick={onOpen} aria-label={t("tapScores")}>
+        {[mine, 1 - mine].map((tm) => (
+          <span key={tm} className={`ss-team team-${tm} ${team[tm] > team[1 - tm] ? "lead" : ""}`}>
+            <span className="ss-names">{room.you !== null ? (tm === mine ? t("us") : t("them")) : `${name(tm)} + ${name(tm + 2)}`}</span>
+            <span className="ss-sub">{g.totals[tm]} + {g.totals[tm + 2]}</span>
+            <strong>{team[tm]}</strong>
+          </span>
+        ))}
+        <span className="ss-more" aria-hidden>▤</span>
+      </button>
+    );
+  }
+  return (
+    <button className="score-strip" onClick={onOpen} aria-label={t("tapScores")}>
+      {order.map((i) => (
+        <span key={i} className={`ss-item ${i === room.you ? "me" : ""} ${g.totals[i] === best && best !== 0 ? "lead" : ""}`}>
+          <span className="ss-name">{name(i)}</span>
+          <strong>{g.totals[i]}</strong>
+        </span>
+      ))}
+      <span className="ss-more" aria-hidden>▤</span>
+    </button>
+  );
+}
+
+function GameOver({ room, send, leave, openScores, openMatch }: { room: RoomView; send: (m: object) => void; leave: () => void; openScores: () => void; openMatch: (id: string) => void }) {
+  const { t } = useI18n();
+  const g = room.game!;
+  const pairs = room.config.pairs;
+  const team = teamTotals(g.totals);
+  const rankScore = (s: number) => (pairs ? team[s % 2] : g.totals[s]);
+  const order = [0, 1, 2, 3].sort((a, b) => rankScore(b) - rankScore(a) || g.totals[b] - g.totals[a]);
+  const name = (i: number) => room.seats[i]?.name ?? "";
+  const headline = pairs
+    ? team[0] === team[1]
+      ? t("draw")
+      : t("teamWins", { names: `${name(order[0])} + ${name((order[0] + 2) % 4)}` })
+    : t("winner", { name: name(order[0]) });
   return (
     <Modal title={t("gameOver")}>
-      <p className="winner-line">🏆 {t("winner", { name: winner })}</p>
-      <ol className="final-list">
-        {order.map((s) => (
-          <li key={s} className={s === room.you ? "me" : ""}>
-            <span>{room.seats[s]?.name}</span>
-            <strong>{g.totals[s]}</strong>
-          </li>
-        ))}
+      <p className="winner-line">🏆 {headline}</p>
+      {pairs && (
+        <div className="team-result">
+          {[0, 1].map((tm) => (
+            <div key={tm} className={`team-box team-${tm} ${team[tm] > team[1 - tm] ? "won" : ""}`}>
+              <span className="team-names">{name(tm)} + {name(tm + 2)}</span>
+              <strong>{team[tm]}</strong>
+            </div>
+          ))}
+        </div>
+      )}
+      <ol className="final-list rich">
+        {order.map((s) => {
+          const c = room.ratingChanges?.[s];
+          return (
+            <li key={s} className={s === room.you ? "me" : ""}>
+              <Avatar url={room.seats[s]?.avatarUrl} name={name(s)} bot={room.seats[s]?.bot} size={32} />
+              <span className="name-link">{name(s)}</span>
+              <strong>{g.totals[s]}</strong>
+              <span className="rating-cell">
+                {c && (
+                  <>
+                    <span className="muted small">{c.after}</span>
+                    <span className={`delta ${c.delta > 0 ? "pos" : c.delta < 0 ? "neg" : ""}`}>{c.delta > 0 ? `+${c.delta}` : c.delta}</span>
+                  </>
+                )}
+              </span>
+            </li>
+          );
+        })}
       </ol>
       <div className="stack">
         {room.isHost && <button className="btn btn-primary btn-big" onClick={() => send({ t: "rematch" })}>{t("playAgain")}</button>}
-        <button className="btn btn-big" onClick={openScores}>{t("scores")}</button>
+        {room.matchId ? (
+          <button className="btn btn-big" onClick={() => openMatch(room.matchId!)}>{t("matchSummary")}</button>
+        ) : (
+          <button className="btn btn-big" onClick={openScores}>{t("scores")}</button>
+        )}
         <button className="btn btn-ghost" onClick={leave}>{t("backHome")}</button>
       </div>
     </Modal>
