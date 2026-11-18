@@ -53,8 +53,29 @@ export interface GameView {
   forbiddenBid: number | null;
 }
 
+export interface Profile {
+  id: string;
+  nickname: string;
+  firstName: string;
+  lastName: string;
+  rating: number;
+  games: number;
+  wins: number;
+  peak: number;
+  avatarUrl: string;
+}
+
+export interface RatingChange {
+  before: number;
+  after: number;
+  delta: number;
+}
+
 export interface SeatView {
   name: string;
+  avatarUrl: string | null;
+  rating: number | null;
+  userId: string | null;
   bot: boolean;
   connected: boolean;
   host: boolean;
@@ -64,6 +85,8 @@ export interface SeatView {
 export interface GameConfig {
   mode: "standard" | "nines";
   khishti: number;
+  /** Partners sit opposite: seats 0 & 2 against 1 & 3. */
+  pairs: boolean;
 }
 
 export interface RoomView {
@@ -77,4 +100,41 @@ export interface RoomView {
   chat: { seat: number | null; name: string; text: string; at: number }[];
   seats: (SeatView | null)[];
   game: GameView | null;
+  ratingChanges: (RatingChange | null)[] | null;
+  matchId: string | null;
+  accounts: boolean;
+}
+
+export interface GameRecord {
+  id: string;
+  finishedAt: string;
+  mode: string;
+  pairs: boolean;
+  score: number;
+  place: number;
+  ratingBefore: number;
+  ratingAfter: number;
+  players: { name: string; userId: string | null; score: number; place: number }[];
+}
+
+export interface MatchPlayer {
+  seat: number;
+  name: string;
+  userId: string | null;
+  bot: boolean;
+  avatarUrl: string | null;
+  score: number;
+  place: number;
+  ratingBefore: number | null;
+  ratingAfter: number | null;
+}
+
+export interface Match {
+  id: string;
+  finishedAt: string;
+  mode: string;
+  khishti: number;
+  pairs: boolean;
+  players: MatchPlayer[];
+  pulkas: PulkaResult[];
 }

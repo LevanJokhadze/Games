@@ -1,6 +1,121 @@
 import { useI18n } from "../i18n";
-import type { RoomView } from "../types";
+import type { PulkaResult, RoomView } from "../types";
 import { Modal } from "./Modal";
+
+/** Combined points of the two teams in pairs mode (seats 0 & 2, 1 & 3). */
+export function teamTotals(totals: number[]): [number, number] {
+  return [(totals[0] ?? 0) + (totals[2] ?? 0), (totals[1] ?? 0) + (totals[3] ?? 0)];
+}
+
+interface Current {
+  pulka: number;
+  deal: number;
+  bids: (number | null)[];
+  took: number[];
+}
+
+export interface ScoreTableProps {
+  names: string[];
+  schedule: number[][];
+  pulkas: PulkaResult[];
+  totals: number[];
+  pairs?: boolean;
+  /** Highlighted seat (you). */
+  you?: number | null;
+  /** The deal in progress, if the game is still running. */
+  current?: Current | null;
+}
+
+/** The full Joker score sheet: every deal of every pulka, bids/tricks, pulka sums and totals. */
+export function ScoreTable({ names, schedule, pulkas, totals, pairs, you, current }: ScoreTableProps) {
+  const { t } = useI18n();
+  const team = pairs ? teamTotals(totals) : null;
+  return (
+    <div className="score-scroll">
+      <table className={`score-table ${pairs ? "pairs" : ""}`}>
+        <thead>
+          <tr>
+            <th>{t("cards")}</th>
+            {names.map((n, i) => (
+              <th key={i} className={`${i === you ? "me" : ""} ${pairs ? `team-${i % 2}` : ""}`}>{n}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {schedule.map((sizes, p) => {
+            const res = pulkas[p];
+            return [
+              <tr key={`h${p}`} className="pulka-row">
+                <td colSpan={5}>{t("pulka")} {p + 1}</td>
+              </tr>,
+              ...sizes.map((size, d) => {
+                const deal = res?.deals[d];
+                const isCurrent = !!current && p === current.pulka && d === current.deal;
+                return (
+                  <tr key={`${p}-${d}`} className={isCurrent ? "current" : ""}>
+                    <td className="size">{size}</td>
+                    {[0, 1, 2, 3].map((i) => {
+                      if (deal) {
+                        const made = deal.bids[i] === deal.took[i];
+                        return (
+                          <td key={i} className={made ? "made" : deal.points[i] < 0 ? "khishti" : "missed"}>
+                            <span className="pts">{deal.points[i]}</span>
+                            <span className="bt">{deal.bids[i]}/{deal.took[i]}</span>
+                          </td>
+                        );
+                      }
+                      if (isCurrent && current!.bids[i] !== null) {
+                        return (
+                          <td key={i} className="pending">
+                            <span className="bt">{current!.bids[i]}/{current!.took[i]}</span>
+                          </td>
+                        );
+                      }
+                      return <td key={i} />;
+                    })}
+                  </tr>
+                );
+              }),
+              res && res.deals.length === sizes.length ? (
+                <tr key={`t${p}`} className="pulka-total">
+                  <td>Σ</td>
+                  {[0, 1, 2, 3].map((i) => (
+                    <td key={i}>
+                      {res.total[i]}
+                      {res.premium.includes(i) && <span className="premium" title={t("premium")}> ★+{res.bonus[i]}</span>}
+                    </td>
+                  ))}
+                </tr>
+              ) : null,
+            ];
+          })}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td>{t("total")}</td>
+            {totals.map((v, i) => (
+              <td key={i}>{v}</td>
+            ))}
+          </tr>
+          {team && (
+            <tr className="team-total">
+              <td>2×2</td>
+              <td colSpan={4}>
+                <span className="team-0">{names[0]} + {names[2]}: <strong>{team[0]}</strong></span>
+                <span className="team-1">{names[1]} + {names[3]}: <strong>{team[1]}</strong></span>
+              </td>
+            </tr>
+          )}
+        </tfoot>
+      </table>
+    </div>
+  );
+}
+
+/** Builds the deal schedule from finished results (for saved matches). */
+export function scheduleFromPulkas(pulkas: PulkaResult[]): number[][] {
+  return pulkas.map((p) => p.deals.map((d) => d.handSize));
+}
 
 export function Scoreboard({ room, onClose }: { room: RoomView; onClose: () => void }) {
   const { t } = useI18n();
@@ -8,75 +123,15 @@ export function Scoreboard({ room, onClose }: { room: RoomView; onClose: () => v
   const names = room.seats.map((s, i) => s?.name ?? `#${i + 1}`);
   return (
     <Modal title={t("scores")} onClose={onClose} wide>
-      <div className="score-scroll">
-        <table className="score-table">
-          <thead>
-            <tr>
-              <th>{t("cards")}</th>
-              {names.map((n, i) => (
-                <th key={i} className={i === room.you ? "me" : ""}>{n}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {g.schedule.map((sizes, p) => {
-              const res = g.pulkas[p];
-              return [
-                <tr key={`h${p}`} className="pulka-row">
-                  <td colSpan={5}>{t("pulka")} {p + 1}</td>
-                </tr>,
-                ...sizes.map((size, d) => {
-                  const deal = res?.deals[d];
-                  const current = p === g.pulka && d === g.dealInPulka && g.phase !== "gameOver";
-                  return (
-                    <tr key={`${p}-${d}`} className={current ? "current" : ""}>
-                      <td className="size">{size}</td>
-                      {[0, 1, 2, 3].map((i) => {
-                        if (deal) {
-                          const made = deal.bids[i] === deal.took[i];
-                          return (
-                            <td key={i} className={made ? "made" : deal.points[i] < 0 ? "khishti" : "missed"}>
-                              <span className="pts">{deal.points[i]}</span>
-                              <span className="bt">{deal.bids[i]}/{deal.took[i]}</span>
-                            </td>
-                          );
-                        }
-                        if (current && g.bids[i] !== null) {
-                          return (
-                            <td key={i} className="pending">
-                              <span className="bt">{g.bids[i]}/{g.took[i]}</span>
-                            </td>
-                          );
-                        }
-                        return <td key={i} />;
-                      })}
-                    </tr>
-                  );
-                }),
-                res && res.deals.length === sizes.length ? (
-                  <tr key={`t${p}`} className="pulka-total">
-                    <td>Σ</td>
-                    {[0, 1, 2, 3].map((i) => (
-                      <td key={i}>
-                        {res.total[i]}
-                        {res.premium.includes(i) && <span className="premium" title={t("premium")}> ★+{res.bonus[i]}</span>}
-                      </td>
-                    ))}
-                  </tr>
-                ) : null,
-              ];
-            })}
-          </tbody>
-          <tfoot>
-            <tr>
-              <td>{t("total")}</td>
-              {g.totals.map((v, i) => (
-                <td key={i}>{v}</td>
-              ))}
-            </tr>
-          </tfoot>
-        </table>
-      </div>
+      <ScoreTable
+        names={names}
+        schedule={g.schedule}
+        pulkas={g.pulkas}
+        totals={g.totals}
+        pairs={room.config.pairs}
+        you={room.you}
+        current={g.phase === "gameOver" ? null : { pulka: g.pulka, deal: g.dealInPulka, bids: g.bids, took: g.took }}
+      />
     </Modal>
   );
 }

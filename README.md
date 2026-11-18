@@ -7,16 +7,24 @@ landscape, touch controls, safe-area insets, installable to the home screen. Geo
 Backend (rules engine, rooms, bots): [LevanJokhadze/GamesBack](https://github.com/LevanJokhadze/GamesBack).
 
 Stack: Vite + React + TypeScript, served as static assets on **Cloudflare Workers**. Card art is
-drawn with CSS (no image assets).
+drawn with CSS and inline SVG (the jokers are an original jester drawing, `src/components/JokerArt.tsx`).
 
 ## Features
 
+- Registration: nickname, first name, last name and photo are all required (the photo is cropped
+  to a square on the phone). "Sign in on another device" gives a private link for your other phones.
+- Global leaderboard with chess Elo, your match history, and a summary of every match
+  (places, rating changes and the full score sheet).
+- Themes: table (green felt, ocean, burgundy, night, wood), card back (red, navy, emerald,
+  black & gold) and card faces (classic or four colours). Saved on the device.
+- Play in pairs: partners sit opposite, team totals decide the winner.
 - Home: play with bots in one tap, create a room for friends, or join with a 5-letter code.
 - Lobby: share link (uses the phone's share sheet), seats, add/remove bots, game type and khishti penalty.
 - Table: opponents around the table, trick in the centre, your hand fanned to fit any width.
   Tap a card to pick it and tap again to play (single click on desktop). Unplayable cards are dimmed.
 - Bidding pad (the dealer's forbidden number is crossed out), trump picker for 9-card deals,
-  joker dialog (high/low, and the suit when leading), full scoreboard by pulka, rules sheet.
+  joker dialog (high/low, and the suit when leading), an always-visible score strip (names and points, or team totals in pairs) that opens the
+  full scoreboard by pulka, rules sheet. Game over shows everyone's rating change.
 - Reconnects automatically; if you drop out a bot plays your turn after a short wait.
 
 ## Development

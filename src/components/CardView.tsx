@@ -1,4 +1,5 @@
 import type { Card, Suit } from "../types";
+import { JokerArt } from "./JokerArt";
 
 export const SUIT_SYMBOL: Record<Suit, string> = { S: "♠", H: "♥", D: "♦", C: "♣" };
 export const RANK_LABEL: Record<number, string> = { 6: "6", 7: "7", 8: "8", 9: "9", 10: "10", 11: "J", 12: "Q", 13: "K", 14: "A" };
@@ -16,8 +17,8 @@ interface Props {
 
 export function CardView({ card, size = "md", disabled, selected, onClick, style, label }: Props) {
   const cls = ["card", `card-${size}`];
-  if (card.joker) cls.push("card-joker");
-  else if (isRed(card.suit)) cls.push("card-red");
+  if (card.joker) cls.push("card-joker", card.id === "J1" ? "joker-red" : "joker-black");
+  else cls.push(`suit-${card.suit}`);
   if (disabled) cls.push("card-disabled");
   if (selected) cls.push("card-selected");
   if (onClick) cls.push("card-clickable");
@@ -26,11 +27,7 @@ export function CardView({ card, size = "md", disabled, selected, onClick, style
   return (
     <Tag className={cls.join(" ")} style={style} onClick={onClick} aria-label={label ?? name} disabled={onClick ? disabled : undefined} type={onClick ? "button" : undefined}>
       {card.joker ? (
-        <>
-          <span className="card-corner">★</span>
-          <span className="joker-star">★</span>
-          <span className="joker-word">JOKER</span>
-        </>
+        <JokerArt id={card.id} compact={size === "sm"} />
       ) : (
         <>
           <span className="card-corner">

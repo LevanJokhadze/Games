@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useI18n } from "../i18n";
 import type { RoomView } from "../types";
+import { Avatar } from "./Avatar";
 
 interface Props {
   room: RoomView;
@@ -47,13 +48,15 @@ export function Lobby({ room, send, leave }: Props) {
         </button>
         <ul className="seat-list">
           {room.seats.map((s, i) => (
-            <li key={i} className={`seat-row ${s?.you ? "me" : ""}`}>
-              <span className="seat-num">{i + 1}</span>
+            <li key={i} className={`seat-row ${s?.you ? "me" : ""} ${room.config.pairs ? `team-${i % 2}` : ""}`}>
+              <span className="seat-num">{room.config.pairs ? (i % 2 === 0 ? "A" : "B") : i + 1}</span>
               {s ? (
                 <>
+                  <Avatar url={s.avatarUrl} name={s.name} bot={s.bot} size={34} />
                   <span className="seat-name">
                     {s.name}
                     {s.you && <em> ({t("you")})</em>}
+                    {s.rating !== null && <small className="seat-rating">{s.rating}</small>}
                   </span>
                   <span className="tags">
                     {s.host && <span className="tag">{t("host")}</span>}
@@ -89,6 +92,24 @@ export function Lobby({ room, send, leave }: Props) {
       </section>
 
       <section className="panel">
+        <div className="field">
+          <span>{t("pairs")}</span>
+          <div className="segmented" role="radiogroup" aria-label={t("pairs")}>
+            {[false, true].map((v) => (
+              <button
+                key={String(v)}
+                role="radio"
+                aria-checked={room.config.pairs === v}
+                className={room.config.pairs === v ? "on" : ""}
+                disabled={!room.isHost}
+                onClick={() => send({ t: "config", config: { pairs: v } })}
+              >
+                {v ? `👥 ${t("pairs")}` : t("solo")}
+              </button>
+            ))}
+          </div>
+          {room.config.pairs && <p className="hint left">{t("pairsHint")}</p>}
+        </div>
         <label className="field">
           <span>{t("mode")}</span>
           <select
