@@ -4,8 +4,12 @@ import type { Card, JokerMode, Play, RoomView, Suit } from "../types";
 import { CardBack, CardView, SUIT_SYMBOL, SuitBadge, isRed } from "./CardView";
 import { Modal } from "./Modal";
 import { Rules } from "./Rules";
+import type { Voice } from "../voice";
+import { onPremium } from "../premium";
 import { Avatar } from "./Avatar";
+import { ChatSheet, VoiceControl, sysText } from "./Chat";
 import { Scoreboard, teamTotals } from "./Scoreboard";
+import { bidText, pts } from "../points";
 
 interface Props {
   room: RoomView;
@@ -13,7 +17,9 @@ interface Props {
   leave: () => void;
   clockOffset: number;
   openMatch: (id: string) => void;
+  voice: Voice;
 }
+
 
 const POS = ["bottom", "left", "top", "right"] as const;
 const SUITS: Suit[] = ["S", "H", "D", "C"];
@@ -30,7 +36,7 @@ function useNow(active: boolean) {
 
 const canHover = typeof window !== "undefined" && window.matchMedia?.("(hover: hover) and (pointer: fine)").matches;
 
-export function Table({ room, send, leave, clockOffset, openMatch }: Props) {
+export function Table({ room, send, leave, clockOffset, openMatch, voice }: Props) {
   const { t } = useI18n();
   const g = room.game!;
   const me = room.you ?? 0;
@@ -42,6 +48,40 @@ export function Table({ room, send, leave, clockOffset, openMatch }: Props) {
   const [jokerFor, setJokerFor] = useState<string | null>(null);
   const [showScores, setShowScores] = useState(false);
   const [showRules, setShowRules] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+
+  // Chat: unread count on the button and a short bubble for new messages.
+  const myName = room.people.find((p) => p.peer === room.peer)?.name;
+  const [seenAt, setSeenAt] = useState(() => room.chat.at(-1)?.at ?? 0);
+  const lastMsg = room.chat.at(-1);
+  useEffect(() => {
+    if (showChat && lastMsg) setSeenAt(lastMsg.at);
+  }, [showChat, lastMsg?.at]);
+  const unread = showChat ? 0 : room.chat.filter((m) => m.at > seenAt && (m.sys || m.name !== myName)).length;
+  const [bubble, setBubble] = useState<{ name: string; text: string; sys?: string } | null>(null);
+  useEffect(() => {
+    if (!lastMsg || showChat || lastMsg.at <= seenAt || (!lastMsg.sys && lastMsg.name === myName)) return;
+    setBubble(lastMsg.sys ? { name: "", text: sysText(t, lastMsg), sys: lastMsg.sys.kind } : { name: lastMsg.name, text: lastMsg.text });
+    const id = setTimeout(() => setBubble(null), 4500);
+    return () => clearTimeout(id);
+  }, [lastMsg?.at]);
+
+  // Announce premium when a pulka ends.
+  const [premiumNote, setPremiumNote] = useState<string | null>(null);
+  const finishedPulkas = g.pulkas.filter((p, i) => p.deals.length === g.schedule[i]?.length).length;
+  const prevFinished = useRef(finishedPulkas);
+  useEffect(() => {
+    if (finishedPulkas > prevFinished.current) {
+      const res = g.pulkas[finishedPulkas - 1];
+      if (res?.premium.length) {
+        setPremiumNote(t("premiumWon", { names: res.premium.map((i) => `${names[i]} +${pts(res.bonus[i])}`).join(", ") }));
+        const id = setTimeout(() => setPremiumNote(null), 5000);
+        prevFinished.current = finishedPulkas;
+        return () => clearTimeout(id);
+      }
+    }
+    prevFinished.current = finishedPulkas;
+  }, [finishedPulkas]);
 
   // Keep the finished trick on the table for a moment so everyone can see who took it.
   const [held, setHeld] = useState<{ plays: Play[]; winner: number } | null>(null);
@@ -63,6 +103,11 @@ export function Table({ room, send, leave, clockOffset, openMatch }: Props) {
       setJokerFor(null);
     }
   }, [myTurn]);
+
+  const isSpeaking = (seat: number) => {
+    const p = room.people.find((x) => x.seat === seat);
+    return !!p && voice.speaking.has(p.peer);
+  };
 
   const showing: { plays: Play[]; winner: number | null } =
     g.trick.length > 0 || !held ? { plays: g.trick, winner: null } : { plays: held.plays, winner: held.winner };
@@ -90,10 +135,16 @@ export function Table({ room, send, leave, clockOffset, openMatch }: Props) {
     setSelected(null);
   };
 
-  const now = useNow(room.deadline !== null);
-  const timeLeft = room.deadline ? Math.max(0, room.deadline - (now + clockOffset)) : null;
+  const now = useNow(room.deadline !== null || room.seats.some((s) => s?.afkKickAt));
+  const serverNow = now + clockOffset;
+  const timeLeft = room.deadline ? Math.max(0, room.deadline - serverNow) : null;
   const turnSeat = room.seats[g.turn];
-  const showTimer = timeLeft !== null && turnSeat && !turnSeat.bot && timeLeft < 30_000;
+  const warn = room.turnStage === "warn";
+  const timerMax = warn ? 60_000 : 30_000;
+  const showTimer = timeLeft !== null && turnSeat && !turnSeat.bot && !turnSeat.afkKickAt && g.phase !== "gameOver";
+  // A bot is playing for me: how long until I am removed.
+  const myKickAt = room.you !== null ? room.seats[room.you]?.afkKickAt ?? null : null;
+  const kickLeft = myKickAt ? Math.max(0, Math.ceil((myKickAt - serverNow) / 1000)) : 0;
 
   const status = (() => {
     if (g.phase === "gameOver") return t("gameOver");
@@ -118,11 +169,26 @@ export function Table({ room, send, leave, clockOffset, openMatch }: Props) {
           {g.phase === "trump" ? <span className="suit-badge">?</span> : <SuitBadge suit={g.trump} />}
           {g.trumpCard && <CardView card={g.trumpCard} size="sm" />}
         </div>
+        <div className="topbar-voice">
+          <VoiceControl voice={voice} compact />
+        </div>
+        <button className="icon-btn chat-btn" onClick={() => setShowChat(true)} aria-label={t("chat")}>
+          💬{unread > 0 && <span className="unread">{unread > 9 ? "9+" : unread}</span>}
+        </button>
         <button className="icon-btn" onClick={() => setShowRules(true)} aria-label={t("rules")}>?</button>
       </header>
       <ScoreStrip room={room} onOpen={() => setShowScores(true)} />
 
       <div className="felt">
+        {bubble && (
+          <button className={`chat-bubble ${bubble.sys ? `sys sys-${bubble.sys}` : ""}`} onClick={() => setShowChat(true)}>
+            <span className="bubble-text">{bubble.sys ? bubble.text : <><strong>{bubble.name}:</strong> {bubble.text}</>}</span>
+          </button>
+        )}
+        {premiumNote && <div className="premium-note" role="status">{premiumNote}</div>}
+        <div className="felt-voice">
+          <VoiceControl voice={voice} compact />
+        </div>
         {[1, 2, 3].map((r) => {
           const seat = (me + r) % 4;
           return (
@@ -132,6 +198,9 @@ export function Table({ room, send, leave, clockOffset, openMatch }: Props) {
               room={room}
               seat={seat}
               timer={showTimer && g.turn === seat ? timeLeft : null}
+              timerMax={timerMax}
+              warn={warn && g.turn === seat}
+              speaking={isSpeaking(seat)}
             />
           );
         })}
@@ -147,10 +216,26 @@ export function Table({ room, send, leave, clockOffset, openMatch }: Props) {
       </div>
 
       <section className="me-area">
-        <div className={`status-line ${myTurn ? "my-turn" : ""}`}>
-          {status}
-          {showTimer && g.turn === room.you && <span className="timer-text"> · {Math.ceil(timeLeft! / 1000)}s</span>}
-        </div>
+        {myKickAt ? (
+          <div className="afk-panel" role="alert">
+            <div className="afk-text">
+              <strong>🤖 {t("afkTitle")}</strong>
+              <span>{t("afkBody", { s: kickLeft })}</span>
+            </div>
+            <button className="btn btn-primary btn-big afk-back" onClick={() => send({ t: "back" })}>
+              👋 {t("imBack")}
+            </button>
+          </div>
+        ) : myTurn && warn && showTimer ? (
+          <div className="status-line my-turn warn" role="alert">
+            ⏰ {t("warnMe", { s: Math.ceil(timeLeft! / 1000) })}
+          </div>
+        ) : (
+          <div className={`status-line ${myTurn ? "my-turn" : ""} ${warn && showTimer ? "warn" : ""}`}>
+            {status}
+            {showTimer && (g.turn === room.you || warn) && <span className="timer-text"> · {Math.ceil(timeLeft! / 1000)}s</span>}
+          </div>
+        )}
 
         {myTurn && g.phase === "trump" && (
           <div className="action-panel trump-panel">
@@ -168,18 +253,18 @@ export function Table({ room, send, leave, clockOffset, openMatch }: Props) {
             {Array.from({ length: g.handSize + 1 }, (_, n) => {
               const ok = g.legalBids.includes(n);
               return (
-                <button key={n} className={`btn bid-btn ${ok ? "" : "forbidden"}`} disabled={!ok} onClick={() => send({ t: "bid", bid: n })}>
-                  {n}
+                <button key={n} className={`btn bid-btn ${ok ? "" : "forbidden"}`} disabled={!ok} onClick={() => send({ t: "bid", bid: n })} aria-label={String(n)}>
+                  {bidText(n)}
                 </button>
               );
             })}
-            {g.forbiddenBid !== null && <p className="hint full">{t("dealerCant", { n: g.forbiddenBid })}</p>}
+            {g.forbiddenBid !== null && <p className="hint full">{t("dealerCant", { n: bidText(g.forbiddenBid) })}</p>}
           </div>
         )}
 
         {room.you !== null && (
           <div className="me-badge-row">
-            <PlayerBadge pos="bottom" room={room} seat={room.you} timer={null} compact />
+            <PlayerBadge pos="bottom" room={room} seat={room.you} timer={null} compact speaking={isSpeaking(room.you)} />
           </div>
         )}
 
@@ -200,6 +285,7 @@ export function Table({ room, send, leave, clockOffset, openMatch }: Props) {
       {jokerFor && <JokerDialog leading={g.trick.length === 0} onChoose={sendJoker} onCancel={() => setJokerFor(null)} />}
       {showScores && <Scoreboard room={room} onClose={() => setShowScores(false)} />}
       {showRules && <Rules onClose={() => setShowRules(false)} />}
+      {showChat && <ChatSheet room={room} send={send} voice={voice} onClose={() => setShowChat(false)} />}
       {room.status === "finished" && !showScores && (
         <GameOver room={room} send={send} leave={leave} openScores={() => setShowScores(true)} openMatch={openMatch} />
       )}
@@ -217,7 +303,7 @@ function JokerCaption({ mode }: { mode: JokerMode }) {
   );
 }
 
-function PlayerBadge({ pos, room, seat, timer, compact }: { pos: string; room: RoomView; seat: number; timer: number | null; compact?: boolean }) {
+function PlayerBadge({ pos, room, seat, timer, timerMax = 30_000, warn, compact, speaking }: { pos: string; room: RoomView; seat: number; timer: number | null; timerMax?: number; warn?: boolean; compact?: boolean; speaking?: boolean }) {
   const { t } = useI18n();
   const g = room.game!;
   const s = room.seats[seat];
@@ -225,9 +311,10 @@ function PlayerBadge({ pos, room, seat, timer, compact }: { pos: string; room: R
   const active = g.turn === seat && g.phase !== "gameOver";
   const count = g.handCounts[seat];
   const pairs = room.config.pairs;
+  const premium = onPremium(g, seat);
   const partner = pairs && room.you !== null && seat === (room.you + 2) % 4;
   return (
-    <div className={`badge badge-${pos} ${active ? "active" : ""} ${compact ? "compact" : ""} ${s && !s.connected ? "offline" : ""} ${pairs ? `team-${seat % 2}` : ""}`}>
+    <div className={`badge badge-${pos} ${active ? "active" : ""} ${compact ? "compact" : ""} ${s && !s.connected ? "offline" : ""} ${pairs ? `team-${seat % 2}` : ""} ${premium ? "on-premium" : ""} ${speaking ? "speaking" : ""} ${warn ? "warn" : ""} ${s?.afkKickAt ? "afk" : ""} ${s?.left ? "left" : ""}`}>
       {!compact && (
         <div className="badge-cards" aria-label={`${count} ${t("cards")}`}>
           {Array.from({ length: Math.min(count, 9) }, (_, i) => (
@@ -240,17 +327,25 @@ function PlayerBadge({ pos, room, seat, timer, compact }: { pos: string; room: R
           {!compact && <Avatar url={s?.avatarUrl} name={s?.name ?? "?"} bot={s?.bot} size={22} />}
           {g.dealer === seat && <span className="dealer-chip" title={t("dealer")}>D</span>}
           <span className="name-text">{s?.name ?? "—"}</span>
+          {speaking && <span className="speaking-icon" aria-label="🔊">🔊</span>}
         </div>
+        {premium && <div className="premium-tag" title={t("onPremium")}>★ {t("premium")}</div>}
         {partner && <div className="partner-tag">{t("partner")}</div>}
         <div className="badge-stats">
           <span className={`bid-took ${bid !== null && g.took[seat] === bid ? "ok" : ""} ${bid !== null && g.took[seat] > bid ? "over" : ""}`}>
-            {bid === null ? "–" : bid} / {g.took[seat]}
+            {bidText(bid)} / {g.took[seat]}
           </span>
-          <span className="score">{g.totals[seat]}</span>
+          <span className="score">{pts(g.totals[seat])}</span>
         </div>
-        {s && !s.connected && <div className="offline-tag">{t("offline")}</div>}
+        {s?.afkKickAt ? (
+          <div className="afk-tag">🤖 {t("botPlaying")}</div>
+        ) : s?.left ? (
+          <div className="afk-tag">🚪 {t("leftTag")}</div>
+        ) : (
+          s && !s.connected && <div className="offline-tag">{t("offline")}</div>
+        )}
       </div>
-      {timer !== null && <div className="timer-bar" style={{ width: `${Math.min(100, (timer / 30_000) * 100)}%` }} />}
+      {timer !== null && <div className={`timer-bar ${warn ? "warn" : ""}`} style={{ width: `${Math.min(100, (timer / timerMax) * 100)}%` }} />}
     </div>
   );
 }
@@ -349,8 +444,8 @@ function ScoreStrip({ room, onOpen }: { room: RoomView; onOpen: () => void }) {
         {[mine, 1 - mine].map((tm) => (
           <span key={tm} className={`ss-team team-${tm} ${team[tm] > team[1 - tm] ? "lead" : ""}`}>
             <span className="ss-names">{room.you !== null ? (tm === mine ? t("us") : t("them")) : `${name(tm)} + ${name(tm + 2)}`}</span>
-            <span className="ss-sub">{g.totals[tm]} + {g.totals[tm + 2]}</span>
-            <strong>{team[tm]}</strong>
+            <span className="ss-sub">{pts(g.totals[tm])} + {pts(g.totals[tm + 2])}</span>
+            <strong>{pts(team[tm])}</strong>
           </span>
         ))}
         <span className="ss-more" aria-hidden>▤</span>
@@ -361,8 +456,8 @@ function ScoreStrip({ room, onOpen }: { room: RoomView; onOpen: () => void }) {
     <button className="score-strip" onClick={onOpen} aria-label={t("tapScores")}>
       {order.map((i) => (
         <span key={i} className={`ss-item ${i === room.you ? "me" : ""} ${g.totals[i] === best && best !== 0 ? "lead" : ""}`}>
-          <span className="ss-name">{name(i)}</span>
-          <strong>{g.totals[i]}</strong>
+          <span className="ss-name">{onPremium(g, i) && <span className="ss-star" title={t("onPremium")}>★</span>}{name(i)}</span>
+          <strong>{pts(g.totals[i])}</strong>
         </span>
       ))}
       <span className="ss-more" aria-hidden>▤</span>
@@ -391,7 +486,7 @@ function GameOver({ room, send, leave, openScores, openMatch }: { room: RoomView
           {[0, 1].map((tm) => (
             <div key={tm} className={`team-box team-${tm} ${team[tm] > team[1 - tm] ? "won" : ""}`}>
               <span className="team-names">{name(tm)} + {name(tm + 2)}</span>
-              <strong>{team[tm]}</strong>
+              <strong>{pts(team[tm])}</strong>
             </div>
           ))}
         </div>
@@ -403,7 +498,7 @@ function GameOver({ room, send, leave, openScores, openMatch }: { room: RoomView
             <li key={s} className={s === room.you ? "me" : ""}>
               <Avatar url={room.seats[s]?.avatarUrl} name={name(s)} bot={room.seats[s]?.bot} size={32} />
               <span className="name-link">{name(s)}</span>
-              <strong>{g.totals[s]}</strong>
+              <strong>{pts(g.totals[s])}</strong>
               <span className="rating-cell">
                 {c && (
                   <>

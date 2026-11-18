@@ -1,6 +1,8 @@
 import { useI18n } from "../i18n";
 import type { PulkaResult, RoomView } from "../types";
+import { onPremium } from "../premium";
 import { Modal } from "./Modal";
+import { bidText, pts } from "../points";
 
 /** Combined points of the two teams in pairs mode (seats 0 & 2, 1 & 3). */
 export function teamTotals(totals: number[]): [number, number] {
@@ -24,10 +26,12 @@ export interface ScoreTableProps {
   you?: number | null;
   /** The deal in progress, if the game is still running. */
   current?: Current | null;
+  /** Players still on premium in the current pulka. */
+  premiumNow?: boolean[];
 }
 
 /** The full Joker score sheet: every deal of every pulka, bids/tricks, pulka sums and totals. */
-export function ScoreTable({ names, schedule, pulkas, totals, pairs, you, current }: ScoreTableProps) {
+export function ScoreTable({ names, schedule, pulkas, totals, pairs, you, current, premiumNow }: ScoreTableProps) {
   const { t } = useI18n();
   const team = pairs ? teamTotals(totals) : null;
   return (
@@ -37,7 +41,10 @@ export function ScoreTable({ names, schedule, pulkas, totals, pairs, you, curren
           <tr>
             <th>{t("cards")}</th>
             {names.map((n, i) => (
-              <th key={i} className={`${i === you ? "me" : ""} ${pairs ? `team-${i % 2}` : ""}`}>{n}</th>
+              <th key={i} className={`${i === you ? "me" : ""} ${pairs ? `team-${i % 2}` : ""} ${premiumNow?.[i] ? "on-premium" : ""}`} title={premiumNow?.[i] ? t("onPremium") : undefined}>
+                {premiumNow?.[i] && <span className="ss-star">★</span>}
+                {n}
+              </th>
             ))}
           </tr>
         </thead>
@@ -46,7 +53,12 @@ export function ScoreTable({ names, schedule, pulkas, totals, pairs, you, curren
             const res = pulkas[p];
             return [
               <tr key={`h${p}`} className="pulka-row">
-                <td colSpan={5}>{t("pulka")} {p + 1}</td>
+                <td colSpan={5}>
+                  {t("pulka")} {p + 1}
+                  {res && res.deals.length === sizes.length && res.premium.length > 0 && (
+                    <span className="pulka-premium"> · ★ {t("premium")}: {res.premium.map((i) => names[i]).join(", ")}</span>
+                  )}
+                </td>
               </tr>,
               ...sizes.map((size, d) => {
                 const deal = res?.deals[d];
@@ -59,15 +71,15 @@ export function ScoreTable({ names, schedule, pulkas, totals, pairs, you, curren
                         const made = deal.bids[i] === deal.took[i];
                         return (
                           <td key={i} className={made ? "made" : deal.points[i] < 0 ? "khishti" : "missed"}>
-                            <span className="pts">{deal.points[i]}</span>
-                            <span className="bt">{deal.bids[i]}/{deal.took[i]}</span>
+                            <span className="pts">{pts(deal.points[i])}</span>
+                            <span className="bt">{bidText(deal.bids[i])}/{deal.took[i]}</span>
                           </td>
                         );
                       }
                       if (isCurrent && current!.bids[i] !== null) {
                         return (
                           <td key={i} className="pending">
-                            <span className="bt">{current!.bids[i]}/{current!.took[i]}</span>
+                            <span className="bt">{bidText(current!.bids[i])}/{current!.took[i]}</span>
                           </td>
                         );
                       }
@@ -80,9 +92,9 @@ export function ScoreTable({ names, schedule, pulkas, totals, pairs, you, curren
                 <tr key={`t${p}`} className="pulka-total">
                   <td>Σ</td>
                   {[0, 1, 2, 3].map((i) => (
-                    <td key={i}>
-                      {res.total[i]}
-                      {res.premium.includes(i) && <span className="premium" title={t("premium")}> ★+{res.bonus[i]}</span>}
+                    <td key={i} className={res.premium.includes(i) ? "premium-cell" : ""}>
+                      {pts(res.total[i])}
+                      {res.premium.includes(i) && <span className="premium" title={t("premium")}> ★+{pts(res.bonus[i])}</span>}
                     </td>
                   ))}
                 </tr>
@@ -94,15 +106,15 @@ export function ScoreTable({ names, schedule, pulkas, totals, pairs, you, curren
           <tr>
             <td>{t("total")}</td>
             {totals.map((v, i) => (
-              <td key={i}>{v}</td>
+              <td key={i}>{pts(v)}</td>
             ))}
           </tr>
           {team && (
             <tr className="team-total">
               <td>2×2</td>
               <td colSpan={4}>
-                <span className="team-0">{names[0]} + {names[2]}: <strong>{team[0]}</strong></span>
-                <span className="team-1">{names[1]} + {names[3]}: <strong>{team[1]}</strong></span>
+                <span className="team-0">{names[0]} + {names[2]}: <strong>{pts(team[0])}</strong></span>
+                <span className="team-1">{names[1]} + {names[3]}: <strong>{pts(team[1])}</strong></span>
               </td>
             </tr>
           )}
@@ -131,6 +143,7 @@ export function Scoreboard({ room, onClose }: { room: RoomView; onClose: () => v
         pairs={room.config.pairs}
         you={room.you}
         current={g.phase === "gameOver" ? null : { pulka: g.pulka, deal: g.dealInPulka, bids: g.bids, took: g.took }}
+        premiumNow={[0, 1, 2, 3].map((i) => onPremium(g, i))}
       />
     </Modal>
   );

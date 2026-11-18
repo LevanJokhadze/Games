@@ -1804,6 +1804,9 @@ select {
     align-items: center;
     gap: 0;
   }
+  .ss-item .ss-name {
+    max-width: 100%;
+  }
   .ss-sub {
     display: none;
   }
@@ -1897,5 +1900,520 @@ select {
   .badge-left,
   .badge-right {
     top: 66%;
+  }
+}
+
+/* ---------- Lobby invite link ---------- */
+.invite h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+.invite-row {
+  display: flex;
+  gap: 8px;
+}
+.invite-link {
+  flex: 1;
+  min-width: 0;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--accent);
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--text);
+  font-size: 0.85rem;
+  text-overflow: ellipsis;
+}
+.invite-row .btn {
+  flex: none;
+  min-width: 84px;
+}
+.ok-text {
+  color: var(--ok);
+  margin: 0;
+}
+.lobby-head .btn {
+  white-space: nowrap;
+}
+
+/* ---------- Chat ---------- */
+.chat {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+.people-row {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.person {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px 3px 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.8rem;
+  max-width: 100%;
+  transition: box-shadow 0.15s;
+}
+.person-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 120px;
+}
+.person.speaking {
+  box-shadow: 0 0 0 2px var(--ok);
+}
+.chat-list {
+  list-style: none;
+  margin: 0;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+  max-height: min(46vh, 360px);
+  min-height: 120px;
+  background: rgba(0, 0, 0, 0.22);
+  border-radius: 12px;
+  overscroll-behavior: contain;
+}
+.chat-list .hint {
+  margin: auto;
+}
+.chat-line {
+  align-self: flex-start;
+  max-width: 85%;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px 12px 12px 4px;
+  padding: 6px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  overflow-wrap: anywhere;
+}
+.chat-line.mine {
+  align-self: flex-end;
+  background: rgba(245, 179, 1, 0.2);
+  border-radius: 12px 12px 4px 12px;
+}
+.chat-name {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+.chat-text {
+  font-size: 0.92rem;
+}
+.chat-line.sys {
+  align-self: center;
+  max-width: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px dashed var(--panel-border);
+  border-radius: 10px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-align: center;
+}
+.chat-line.sys-warn,
+.chat-line.sys-afk,
+.chat-line.sys-kicked {
+  color: #ffc7c7;
+  border-color: rgba(255, 107, 107, 0.45);
+}
+.chat-line.sys-back {
+  color: var(--ok);
+}
+.chat-form {
+  display: flex;
+  gap: 8px;
+}
+.chat-form input {
+  flex: 1;
+  min-width: 0;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 16px;
+  color: var(--text);
+  min-height: 46px;
+}
+.chat-form .btn {
+  flex: none;
+}
+.chat-btn {
+  position: relative;
+}
+.unread {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+}
+.chat-bubble {
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
+  transform: translateX(-50%);
+  z-index: 4;
+  max-width: min(78vw, 420px);
+  background: rgba(8, 20, 16, 0.92);
+  color: var(--text);
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+  padding: 7px 12px;
+  font-size: 0.85rem;
+  text-align: left;
+  cursor: pointer;
+  animation: pop-up 0.18s ease-out;
+}
+.bubble-text {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+.chat-bubble strong {
+  color: var(--accent);
+}
+.chat-bubble.sys {
+  text-align: center;
+  border-color: rgba(255, 107, 107, 0.6);
+}
+.chat-bubble.sys-back {
+  border-color: var(--ok);
+}
+
+/* ---------- Voice ---------- */
+.voice-ctl {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.voice-ctl .error-text {
+  margin: 0;
+  flex-basis: 100%;
+}
+.voice-join {
+  min-height: 44px;
+}
+.ptt {
+  appearance: none;
+  flex: 1;
+  min-height: 52px;
+  border-radius: 999px;
+  border: 2px solid var(--ok);
+  background: rgba(94, 224, 143, 0.12);
+  color: var(--text);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 16px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: none;
+}
+.ptt.on {
+  background: var(--ok);
+  color: #06351d;
+  box-shadow: 0 0 0 4px rgba(94, 224, 143, 0.35);
+}
+.ptt-icon {
+  font-size: 1.2rem;
+}
+.ptt-hint {
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+.voice-leave {
+  width: 44px;
+  height: 44px;
+}
+.felt-voice {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  z-index: 3;
+}
+.voice-ctl.compact .voice-join {
+  width: 48px;
+  height: 48px;
+  min-height: 0;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 1.2rem;
+}
+.voice-ctl.compact .ptt {
+  flex: none;
+  width: 64px;
+  height: 64px;
+  min-height: 0;
+  padding: 0;
+  border-radius: 50%;
+}
+.voice-ctl.compact .ptt-label,
+.voice-ctl.compact .ptt-hint {
+  display: none;
+}
+.voice-ctl.compact .ptt-icon {
+  font-size: 1.6rem;
+}
+.voice-ctl.compact .voice-leave {
+  width: 36px;
+  height: 36px;
+  align-self: flex-end;
+}
+.badge.speaking .badge-main {
+  box-shadow: 0 0 0 2px var(--ok), 0 0 14px rgba(94, 224, 143, 0.6);
+}
+.speaking-icon {
+  font-size: 0.75rem;
+  animation: pulse 0.9s ease-in-out infinite;
+}
+@keyframes pulse {
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* ---------- Premium ---------- */
+.badge.on-premium .badge-main {
+  background: linear-gradient(180deg, rgba(245, 179, 1, 0.28), var(--panel) 70%);
+  border-color: rgba(245, 179, 1, 0.8);
+}
+.premium-tag {
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-radius: 999px;
+  padding: 0 7px;
+  margin: 2px auto 1px;
+  width: fit-content;
+  white-space: nowrap;
+}
+.ss-star {
+  color: var(--accent);
+  margin-right: 2px;
+  font-weight: 800;
+}
+.score-table .premium-cell {
+  background: rgba(245, 179, 1, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(245, 179, 1, 0.55);
+}
+.score-table th.on-premium {
+  color: var(--accent);
+}
+.pulka-premium {
+  color: var(--accent);
+  font-weight: 700;
+}
+.premium-note {
+  position: absolute;
+  left: 50%;
+  top: 22%;
+  transform: translateX(-50%);
+  z-index: 5;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 800;
+  border-radius: 14px;
+  padding: 10px 16px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+  max-width: 86vw;
+  text-align: center;
+  animation: pop-up 0.25s ease-out;
+}
+
+/* ---------- Not responding ---------- */
+.status-line.warn {
+  color: #fff;
+  background: rgba(255, 107, 107, 0.85);
+  border-radius: 10px;
+  padding: 4px 10px;
+  font-weight: 700;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+.badge.warn .badge-main {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 2px var(--danger), 0 0 18px rgba(255, 107, 107, 0.5);
+}
+.timer-bar.warn {
+  background: var(--danger);
+}
+.badge.afk .badge-main,
+.badge.left .badge-main {
+  border-style: dashed;
+  opacity: 0.85;
+}
+.afk-tag {
+  font-size: 0.64rem;
+  color: #ffc7c7;
+}
+@media (orientation: portrait) {
+  .badge-left,
+  .badge-right {
+    max-width: 30vw;
+  }
+  .badge-left .badge-name,
+  .badge-right .badge-name {
+    max-width: 27vw;
+  }
+}
+.afk-panel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 107, 107, 0.16);
+  border: 2px solid var(--danger);
+  border-radius: 14px;
+  padding: 10px 12px;
+  animation: pop-up 0.18s ease-out;
+}
+.afk-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.85rem;
+}
+.afk-back.btn-big {
+  width: auto;
+  flex: none;
+  padding: 0 18px;
+}
+@media (max-width: 380px) {
+  .afk-panel {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .afk-back.btn-big {
+    width: 100%;
+  }
+}
+
+/* ---------- Password and log in ---------- */
+.pw-wrap {
+  position: relative;
+  display: flex;
+}
+.pw-wrap input {
+  flex: 1;
+  min-width: 0;
+  padding-right: 52px;
+}
+.pw-eye {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 40px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-size: 1.05rem;
+}
+.field-highlight input {
+  border-color: var(--accent);
+}
+.field-highlight small {
+  color: var(--accent);
+}
+.switch-auth {
+  margin-top: -2px;
+}
+.pw-banner {
+  appearance: none;
+  border: 1px solid var(--accent);
+  background: rgba(245, 179, 1, 0.14);
+  color: var(--text);
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+}
+.logout-btn {
+  width: 100%;
+  margin-top: 8px;
+  color: var(--danger);
+  border: 1px solid rgba(255, 107, 107, 0.4);
+}
+
+.topbar-voice {
+  display: none;
+}
+
+/* Landscape phones: keep badges short and the voice button clear of the left player. */
+@media (max-height: 500px) and (orientation: landscape) {
+  .badge .premium-tag {
+    display: none;
+  }
+  .badge.on-premium .name-text::before {
+    content: "★ ";
+    color: var(--accent);
+  }
+  .felt-voice {
+    display: none;
+  }
+  .topbar-voice {
+    display: block;
+  }
+  .topbar-voice .voice-ctl {
+    flex-wrap: nowrap;
+    gap: 4px;
+  }
+  .topbar-voice .voice-ctl.compact .voice-join {
+    width: 38px;
+    height: 38px;
+    font-size: 1rem;
+  }
+  .topbar-voice .voice-ctl.compact .ptt {
+    width: 46px;
+    height: 38px;
+    border-radius: 19px;
+  }
+  .topbar-voice .voice-ctl.compact .ptt-icon {
+    font-size: 1.1rem;
+  }
+  .topbar-voice .voice-ctl.compact .voice-leave {
+    width: 32px;
+    height: 32px;
+    align-self: center;
+  }
+  .topbar-voice .error-text {
+    display: none;
+  }
+}
+@media (max-height: 400px) and (orientation: landscape) {
+  .badge-left,
+  .badge-right {
+    top: 73%;
   }
 }

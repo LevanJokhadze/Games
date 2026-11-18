@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createRoom, getToken, updateMe } from "../api";
+import { createRoom, getToken, logout, updateMe } from "../api";
 import { useI18n } from "../i18n";
 import type { Theme } from "../theme";
 import type { Profile } from "../types";
@@ -13,6 +13,7 @@ import { Settings } from "./Settings";
 interface Props {
   me: Profile;
   setMe: (p: Profile) => void;
+  onLogout: () => void;
   go: (code: string, autostart?: boolean) => void;
   nav: (hash: string) => void;
   theme: Theme;
@@ -21,7 +22,7 @@ interface Props {
 
 type Sheet = null | "rules" | "leaderboard" | "settings" | "profile";
 
-export function Home({ me, setMe, go, nav, theme, setTheme }: Props) {
+export function Home({ me, setMe, onLogout, go, nav, theme, setTheme }: Props) {
   const { t } = useI18n();
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
@@ -61,6 +62,12 @@ export function Home({ me, setMe, go, nav, theme, setTheme }: Props) {
         <h1>{t("title")}</h1>
         <p className="tagline">{t("tagline")}</p>
       </div>
+
+      {me.hasPassword === false && (
+        <button className="pw-banner" onClick={() => setSheet("profile")}>
+          🔑 {t("setPasswordBanner")}
+        </button>
+      )}
 
       <section className="panel home-panel">
         <button className="btn btn-primary btn-big" disabled={busy} onClick={() => create(true)}>
@@ -116,12 +123,12 @@ export function Home({ me, setMe, go, nav, theme, setTheme }: Props) {
       {sheet === "rules" && <Rules onClose={() => setSheet(null)} />}
       {sheet === "leaderboard" && <Leaderboard me={me} onClose={() => setSheet(null)} openPlayer={(id) => nav(`#/player/${id}`)} />}
       {sheet === "settings" && <Settings theme={theme} setTheme={setTheme} onClose={() => setSheet(null)} />}
-      {sheet === "profile" && <ProfileSheet me={me} setMe={setMe} onClose={() => setSheet(null)} />}
+      {sheet === "profile" && <ProfileSheet me={me} setMe={setMe} onLogout={onLogout} onClose={() => setSheet(null)} />}
     </main>
   );
 }
 
-function ProfileSheet({ me, setMe, onClose }: { me: Profile; setMe: (p: Profile) => void; onClose: () => void }) {
+function ProfileSheet({ me, setMe, onLogout, onClose }: { me: Profile; setMe: (p: Profile) => void; onLogout: () => void; onClose: () => void }) {
   const { t } = useI18n();
   const [copied, setCopied] = useState(false);
   const link = `${location.origin}${location.pathname}#/key/${getToken() ?? ""}`;
@@ -144,6 +151,7 @@ function ProfileSheet({ me, setMe, onClose }: { me: Profile; setMe: (p: Profile)
       </div>
       <ProfileForm
         initial={me}
+        password="optional"
         submitLabel={t("save")}
         onSubmit={async (p) => {
           setMe(await updateMe(p));
@@ -155,6 +163,15 @@ function ProfileSheet({ me, setMe, onClose }: { me: Profile; setMe: (p: Profile)
         <p className="hint left">{t("deviceLinkHint")}</p>
         <button className="btn" onClick={copy}>{copied ? `✓ ${t("copied")}` : `🔑 ${t("copyLink")}`}</button>
       </section>
+      {me.hasPassword && <button
+        className="btn btn-ghost logout-btn"
+        onClick={async () => {
+          await logout();
+          onLogout();
+        }}
+      >
+        {t("logout")}
+      </button>}
     </Modal>
   );
 }

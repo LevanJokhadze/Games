@@ -4,6 +4,7 @@ import { useI18n } from "../i18n";
 import type { GameRecord, Match, Profile } from "../types";
 import { Avatar } from "./Avatar";
 import { ScoreTable, scheduleFromPulkas, teamTotals } from "./Scoreboard";
+import { pts } from "../points";
 
 function fmtDate(iso: string, lang: string): string {
   const d = new Date(iso);
@@ -37,7 +38,7 @@ export function GameList({ games, userId, open }: { games: GameRecord[]; userId:
               <PlaceChip place={g.place} pairs={g.pairs} />
               <span className="game-main">
                 <span className="game-top">
-                  <strong>{g.score}</strong>
+                  <strong>{pts(g.score)}</strong>
                   {g.pairs && <span className="tag">2×2</span>}
                   {g.mode === "nines" && <span className="tag">9×</span>}
                   <span className="muted small">{fmtDate(g.finishedAt, lang)}</span>
@@ -155,14 +156,14 @@ export function MatchPage({ id, me, back, openPlayer }: { id: string; me: Profil
         <>
           <section className="panel">
             <p className="muted center">
-              {fmtDate(m.finishedAt, lang)} · {m.mode === "nines" ? t("modeNines") : t("modeStandard")} · {m.pairs ? t("pairs") : t("solo")} · {t("khishti")} {m.khishti}
+              {fmtDate(m.finishedAt, lang)} · {m.mode === "nines" ? t("modeNines") : t("modeStandard")} · {m.pairs ? t("pairs") : t("solo")} · {t("khishti")} {pts(m.khishti)}
             </p>
             {team && (
               <div className="team-result">
                 {[0, 1].map((tm) => (
                   <div key={tm} className={`team-box team-${tm} ${team[tm] > team[1 - tm] ? "won" : ""}`}>
                     <span className="team-names">{m.players[tm].name} + {m.players[tm + 2].name}</span>
-                    <strong>{team[tm]}</strong>
+                    <strong>{pts(team[tm])}</strong>
                     {team[tm] > team[1 - tm] && <span>🏆</span>}
                   </div>
                 ))}
@@ -179,7 +180,7 @@ export function MatchPage({ id, me, back, openPlayer }: { id: string; me: Profil
                   ) : (
                     <span className="name-link">{p.name}</span>
                   )}
-                  <strong>{p.score}</strong>
+                  <strong>{pts(p.score)}</strong>
                   <span className="rating-cell">
                     {p.ratingAfter !== null && <span className="muted small">{p.ratingAfter}</span>}
                     <Delta before={p.ratingBefore} after={p.ratingAfter} />

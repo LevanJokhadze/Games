@@ -27,16 +27,19 @@ const NICK_RE = /^[A-Za-z0-9_.ა-ჿ]{3,20}$/;
 
 interface Props {
   initial?: Profile | null;
+  /** "required" when creating a player; "optional" (change it) in the profile. */
+  password: "required" | "optional";
   submitLabel: string;
   onSubmit: (p: ProfileInput) => Promise<void>;
 }
 
-export function ProfileForm({ initial, submitLabel, onSubmit }: Props) {
+export function ProfileForm({ initial, password: pwMode, submitLabel, onSubmit }: Props) {
   const { t } = useI18n();
   const [nickname, setNickname] = useState(initial?.nickname ?? "");
   const [firstName, setFirstName] = useState(initial?.firstName ?? "");
   const [lastName, setLastName] = useState(initial?.lastName ?? "");
   const [avatar, setAvatar] = useState<string | null>(null);
+  const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -61,6 +64,10 @@ export function ProfileForm({ initial, submitLabel, onSubmit }: Props) {
       setErr(t("allRequired"));
       return;
     }
+    if ((pwMode === "required" || password) && password.length < 6) {
+      setErr(t("passwordShort"));
+      return;
+    }
     setBusy(true);
     setErr(null);
     try {
@@ -69,7 +76,9 @@ export function ProfileForm({ initial, submitLabel, onSubmit }: Props) {
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         ...(avatar ? { avatar } : {}),
+        ...(password ? { password } : {}),
       });
+      setPassword("");
     } catch (e2) {
       setErr(e2 instanceof ApiError ? e2.message : t("errorCreate"));
     } finally {
@@ -100,10 +109,35 @@ export function ProfileForm({ initial, submitLabel, onSubmit }: Props) {
           <input value={lastName} onChange={(e) => setLastName(e.target.value)} maxLength={30} autoComplete="family-name" />
         </label>
       </div>
+      <PasswordField
+        label={pwMode === "required" ? `${t("password")} *` : initial?.hasPassword ? t("newPassword") : t("password")}
+        hint={pwMode === "required" ? t("passwordHint") : initial?.hasPassword ? t("newPasswordHint") : t("setPasswordHint")}
+        value={password}
+        onChange={setPassword}
+        autoComplete="new-password"
+        highlight={pwMode === "optional" && !initial?.hasPassword}
+      />
       {err && <p className="error-text">{err}</p>}
       <button className="btn btn-primary btn-big" type="submit" disabled={busy}>
         {submitLabel}
       </button>
     </form>
+  );
+}
+
+export function PasswordField({ label, hint, value, onChange, autoComplete, highlight }: { label: string; hint?: string; value: string; onChange: (v: string) => void; autoComplete: string; highlight?: boolean }) {
+  const { t } = useI18n();
+  const [show, setShow] = useState(false);
+  return (
+    <label className={`field ${highlight ? "field-highlight" : ""}`}>
+      <span>{label}</span>
+      <span className="pw-wrap">
+        <input type={show ? "text" : "password"} value={value} onChange={(e) => onChange(e.target.value)} maxLength={100} autoComplete={autoComplete} autoCapitalize="off" spellCheck={false} />
+        <button type="button" className="pw-eye" onClick={() => setShow(!show)} aria-label={t("showPassword")} aria-pressed={show}>
+          {show ? "🙈" : "👁"}
+        </button>
+      </span>
+      {hint && <small className="muted">{hint}</small>}
+    </label>
   );
 }

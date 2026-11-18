@@ -1,34 +1,43 @@
 import { useState } from "react";
 import { useI18n } from "../i18n";
 import type { RoomView } from "../types";
+import type { Voice } from "../voice";
 import { Avatar } from "./Avatar";
+import { ChatBody, VoiceControl } from "./Chat";
+import { pts } from "../points";
 
 interface Props {
   room: RoomView;
   send: (m: object) => void;
   leave: () => void;
+  voice: Voice;
 }
 
-export function Lobby({ room, send, leave }: Props) {
+export function Lobby({ room, send, leave, voice }: Props) {
   const { t } = useI18n();
   const [copied, setCopied] = useState(false);
   const link = `${location.origin}${location.pathname}#/room/${room.code}`;
 
-  const share = async () => {
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: t("title"), text: `${t("room")} ${room.code}`, url: link });
-        return;
-      }
-    } catch {
-      /* cancelled */
-    }
+  const canShare = typeof navigator !== "undefined" && !!navigator.share;
+
+  const copy = async () => {
     try {
       await navigator.clipboard.writeText(link);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
     } catch {
-      prompt(t("share"), link);
+      // Older browsers: select the text so the player can copy it by hand.
+      const el = document.getElementById("invite-link") as HTMLInputElement | null;
+      el?.select();
+      document.execCommand?.("copy");
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const share = async () => {
+    try {
+      await navigator.share({ title: t("title"), text: `${t("inviteTitle")}: ${t("room")} ${room.code}`, url: link });
+    } catch {
+      /* cancelled */
     }
   };
 
@@ -42,10 +51,20 @@ export function Lobby({ room, send, leave }: Props) {
         </div>
       </header>
 
+      <section className="panel invite">
+        <h3>🔗 {t("inviteTitle")}</h3>
+        <div className="invite-row">
+          <input id="invite-link" className="invite-link" value={link} readOnly onFocus={(e) => e.target.select()} aria-label={t("inviteTitle")} />
+          <button className="btn btn-primary" onClick={copy}>{copied ? "✓" : t("copy")}</button>
+        </div>
+        {copied && <p className="hint ok-text">{t("copied")}</p>}
+        {canShare && (
+          <button className="btn btn-big" onClick={share}>📤 {t("shareVia")}</button>
+        )}
+        <p className="hint left">{t("inviteHint")}</p>
+      </section>
+
       <section className="panel">
-        <button className="btn btn-big" onClick={share}>
-          {copied ? `✓ ${t("copied")}` : `🔗 ${t("share")}`}
-        </button>
         <ul className="seat-list">
           {room.seats.map((s, i) => (
             <li key={i} className={`seat-row ${s?.you ? "me" : ""} ${room.config.pairs ? `team-${i % 2}` : ""}`}>
@@ -129,7 +148,7 @@ export function Lobby({ room, send, leave }: Props) {
             onChange={(e) => send({ t: "config", config: { khishti: Number(e.target.value) } })}
           >
             {[-200, -500, -900].map((v) => (
-              <option key={v} value={v}>{v}</option>
+              <option key={v} value={v}>{pts(v)}</option>
             ))}
           </select>
         </label>
@@ -143,6 +162,11 @@ export function Lobby({ room, send, leave }: Props) {
         ) : (
           <p className="hint">{room.you === null ? t("spectating") : t("onlyHost")}</p>
         )}
+      </section>
+      <section className="panel">
+        <h3>💬 {t("chat")}</h3>
+        <VoiceControl voice={voice} />
+        <ChatBody room={room} send={send} voice={voice} />
       </section>
     </main>
   );

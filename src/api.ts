@@ -54,12 +54,29 @@ export interface ProfileInput {
   firstName: string;
   lastName: string;
   avatar?: string;
+  password?: string;
 }
 
 export async function register(p: ProfileInput): Promise<Profile> {
   const r = await api<{ token: string; user: Profile }>("/api/register", { method: "POST", body: JSON.stringify(p) });
   setToken(r.token);
   return r.user;
+}
+
+/** Log in on this device with nickname + password. */
+export async function login(nickname: string, password: string): Promise<Profile> {
+  const r = await api<{ token: string; user: Profile }>("/api/login", { method: "POST", body: JSON.stringify({ nickname, password }) });
+  setToken(r.token);
+  return r.user;
+}
+
+export async function logout(): Promise<void> {
+  try {
+    await api("/api/logout", { method: "POST" });
+  } catch {
+    /* offline: forget the token anyway */
+  }
+  setToken(null);
 }
 
 export async function fetchMe(): Promise<Profile | null> {
@@ -139,6 +156,7 @@ export function useRoom(code: string, name: string, onAuthError?: () => void) {
   const [error, setError] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const clockOffset = useRef(0);
+  const listeners = useRef(new Set<(m: { t: string; [k: string]: unknown }) => void>());
 
   useEffect(() => {
     let stopped = false;
@@ -162,6 +180,8 @@ export function useRoom(code: string, name: string, onAuthError?: () => void) {
         if (m.t === "state") {
           clockOffset.current = m.room.serverTime - Date.now();
           setRoom(m.room);
+        } else if (m.t === "rtc" || m.t === "talk") {
+          listeners.current.forEach((fn) => fn(m));
         } else if (m.t === "error") {
           if (m.code === "auth") onAuthError?.();
           else setError(m.message);
@@ -213,5 +233,13 @@ export function useRoom(code: string, name: string, onAuthError?: () => void) {
     if (ws && ws.readyState === 1) ws.send(JSON.stringify(msg));
   }, []);
 
-  return { room, status, error, clearError: () => setError(null), send, clockOffset };
+  /** Listen to voice-chat messages (WebRTC signalling and push-to-talk); returns an unsubscribe. */
+  const subscribe = useCallback((fn: (m: { t: string; [k: string]: unknown }) => void) => {
+    listeners.current.add(fn);
+    return () => {
+      listeners.current.delete(fn);
+    };
+  }, []);
+
+  return { room, status, error, clearError: () => setError(null), send, clockOffset, subscribe };
 }
