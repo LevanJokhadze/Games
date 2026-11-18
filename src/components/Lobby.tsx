@@ -165,7 +165,7 @@ export function Lobby({ room, send, leave, voice }: Props) {
       </section>
       <section className="panel">
         <h3>💬 {t("chat")}</h3>
-        <VoiceControl voice={voice} />
+        <VoiceControl voice={voice} people={room.people} />
         <ChatBody room={room} send={send} voice={voice} />
       </section>
     </main>
