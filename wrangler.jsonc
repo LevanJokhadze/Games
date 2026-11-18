@@ -3,6 +3,8 @@
   // Static site served from Cloudflare Workers (no server code).
   "name": "joker-frontend",
   "compatibility_date": "2025-11-01",
+  // Build before every deploy, so `npx wrangler deploy` alone works (Workers Builds default).
+  "build": { "command": "npm run build" },
   "assets": {
     "directory": "./dist",
     "not_found_handling": "single-page-application"
