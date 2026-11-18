@@ -10,6 +10,8 @@ import { Avatar } from "./Avatar";
 import { ChatSheet, VoiceControl, sysText } from "./Chat";
 import { Scoreboard, teamTotals } from "./Scoreboard";
 import { bidBalance, bidText, fillNeeded, pts } from "../points";
+import { play as playSound } from "../sound";
+import { SoundToggle } from "./SoundToggle";
 
 interface Props {
   room: RoomView;
@@ -103,6 +105,8 @@ export function Table({ room, send, leave, clockOffset, openMatch, voice }: Prop
       setJokerFor(null);
     }
   }, [myTurn]);
+
+  useTableSounds(room, myTurn, lastKey);
 
   const isSpeaking = (seat: number) => {
     const p = room.people.find((x) => x.seat === seat);
@@ -297,7 +301,7 @@ export function Table({ room, send, leave, clockOffset, openMatch, voice }: Prop
 
       {jokerFor && <JokerDialog leading={g.trick.length === 0} onChoose={sendJoker} onCancel={() => setJokerFor(null)} />}
       {showScores && <Scoreboard room={room} onClose={() => setShowScores(false)} />}
-      {showRules && <Rules onClose={() => setShowRules(false)} />}
+      {showRules && <Rules top={<SoundToggle />} onClose={() => setShowRules(false)} />}
       {showChat && <ChatSheet room={room} send={send} voice={voice} onClose={() => setShowChat(false)} />}
       {room.status === "finished" && !showScores && (
         <GameOver room={room} send={send} leave={leave} openScores={() => setShowScores(true)} openMatch={openMatch} />
@@ -314,6 +318,42 @@ function JokerCaption({ mode }: { mode: JokerMode }) {
       {mode.suit && <span className={isRed(mode.suit) ? "red" : ""}> {SUIT_SYMBOL[mode.suit]}</span>}
     </span>
   );
+}
+
+/** Plays the card sounds for what changed at the table. */
+function useTableSounds(room: RoomView, myTurn: boolean, lastKey: string) {
+  const g = room.game!;
+  const prev = useRef<{ deal: string; trick: number; lastKey: string; bids: number; myTurn: boolean; warn: boolean; chat: number; over: boolean; pulkas: number } | null>(null);
+  const dealKey = `${g.pulka}-${g.dealInPulka}`;
+  const bids = g.bids.filter((b) => b !== null).length;
+  const warn = myTurn && room.turnStage === "warn";
+  const lastChat = room.chat.at(-1);
+  const myName = room.people.find((p) => p.peer === room.peer)?.name;
+  const over = g.phase === "gameOver";
+  const premiumPulkas = g.pulkas.filter((p, i) => p.deals.length === g.schedule[i]?.length && p.premium.length > 0).length;
+  useEffect(() => {
+    const p = prev.current;
+    prev.current = { deal: dealKey, trick: g.trick.length, lastKey, bids, myTurn, warn, chat: lastChat?.at ?? 0, over, pulkas: premiumPulkas };
+    if (!p) return; // first render: nothing happened yet
+    if (over && !p.over) {
+      playSound("win");
+      return;
+    }
+    if (lastKey !== p.lastKey && lastKey) {
+      // The fourth card went straight into the finished trick.
+      const card = g.lastTrick?.plays.at(-1)?.card;
+      playSound(card?.joker ? "joker" : "play");
+      setTimeout(() => playSound("trick"), 700);
+    } else if (g.trick.length > p.trick) {
+      playSound(g.trick.at(-1)?.card.joker ? "joker" : "play");
+    }
+    if (dealKey !== p.deal && !over) setTimeout(() => playSound("deal"), lastKey !== p.lastKey ? 1500 : 0);
+    if (bids > p.bids) playSound("bid");
+    if (premiumPulkas > p.pulkas) setTimeout(() => playSound("premium"), 900);
+    if (warn && !p.warn) playSound("warn");
+    else if (myTurn && !p.myTurn) setTimeout(() => playSound("turn"), 250);
+    if (lastChat && lastChat.at !== p.chat && (lastChat.sys || lastChat.name !== myName)) playSound("chat");
+  }, [dealKey, g.trick.length, lastKey, bids, myTurn, warn, lastChat?.at, over, premiumPulkas]);
 }
 
 function PlayerBadge({ pos, room, seat, timer, timerMax = 30_000, warn, compact, speaking }: { pos: string; room: RoomView; seat: number; timer: number | null; timerMax?: number; warn?: boolean; compact?: boolean; speaking?: boolean }) {
