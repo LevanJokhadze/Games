@@ -2565,4 +2565,14 @@ select {
 }
 .link-dot.link-failed {
   background: var(--danger);
+/* ---------- Sounds ---------- */
+.sound-toggle {
+  width: 100%;
+  justify-content: center;
+}
+.sound-toggle.on {
+  border-color: var(--ok);
+}
+.rules-top {
+  margin-bottom: 12px;
 }
