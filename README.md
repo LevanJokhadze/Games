@@ -34,7 +34,7 @@ the same Wi-Fi with `http://<your-computer-ip>:5173`.
 
 | Variable | Meaning |
 | --- | --- |
-| `VITE_API_URL` | URL of the GamesBack worker, e.g. `https://joker-api.example.com`. Build-time. If empty, the site calls its own origin (use this when the API is routed under the same hostname at `/api/*`). |
+| `VITE_API_URL` | URL of the GamesBack server (production default in `.env.production`: the Railway service), e.g. `https://joker-api.example.com`. Build-time. If empty, the site calls its own origin (use this when the API is routed under the same hostname at `/api/*`). |
 
 Copy `.env.example` to `.env.local` to set it locally.
 
