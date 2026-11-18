@@ -184,6 +184,13 @@ export function useVoice(room: RoomView | null, send: (m: object) => void, subsc
     for (const id of want) getPeer(id);
   }, [joined, key]);
 
+  // After a dropped connection the server forgets that we joined voice, and everyone else hangs
+  // up on us while the talk light still works. Tell it again whenever it shows us out of voice.
+  const meInVoice = room?.people.find((p) => p.peer === me)?.voice;
+  useEffect(() => {
+    if (joined && meInVoice === false) send({ t: "voice", on: true });
+  }, [joined, meInVoice, me, send]);
+
   // Keep the mic open a moment after release so the last word isn't cut off.
   const tail = useRef<number | undefined>(undefined);
   const stopTalk = useCallback(() => {
