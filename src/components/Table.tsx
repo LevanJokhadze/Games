@@ -367,8 +367,11 @@ function Hand({ cards, hiddenExtra, playable, dim, selected, onTap }: { cards: C
   const n = cards.length + hiddenExtra;
   const layout = useMemo(() => {
     const avail = Math.max(200, width - 8);
-    const maxByHeight = vh * (vh < 500 ? 0.2 : 0.15);
-    const cw = Math.max(44, Math.min(92, maxByHeight, n > 0 ? avail / (n * 0.62 + 0.38) : 92));
+    // Desktop screens have room to spare: let the cards grow.
+    const desktop = typeof window !== "undefined" && window.innerWidth >= 900 && vh >= 640;
+    const maxCw = desktop ? 150 : 92;
+    const maxByHeight = vh * (vh < 500 ? 0.2 : desktop ? 0.14 : 0.15);
+    const cw = Math.max(44, Math.min(maxCw, maxByHeight, n > 0 ? avail / (n * 0.62 + 0.38) : maxCw));
     const step = n > 1 ? Math.min(cw + 6, (avail - cw) / (n - 1)) : 0;
     return { cw, step, total: n > 0 ? cw + step * (n - 1) : 0 };
   }, [width, vh, n]);
