@@ -1,8 +1,9 @@
-import { useState } from "react";
-import { createRoom, getToken, logout, updateMe } from "../api";
+import { useEffect, useState } from "react";
+import { createRoom, fetchSheets, getToken, logout, updateMe } from "../api";
 import { useI18n } from "../i18n";
 import type { Theme } from "../theme";
-import type { Profile } from "../types";
+import type { Profile, Sheet } from "../types";
+import { SheetBanners } from "./Sheet";
 import { Avatar } from "./Avatar";
 import { Leaderboard } from "./Leaderboard";
 import { Modal } from "./Modal";
@@ -20,14 +21,18 @@ interface Props {
   setTheme: (t: Partial<Theme>) => void;
 }
 
-type Sheet = null | "rules" | "leaderboard" | "settings" | "profile";
+type SheetName = null | "rules" | "leaderboard" | "settings" | "profile";
 
 export function Home({ me, setMe, onLogout, go, nav, theme, setTheme }: Props) {
   const { t } = useI18n();
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [sheet, setSheet] = useState<Sheet>(null);
+  const [sheet, setSheet] = useState<SheetName>(null);
+  const [sheets, setSheets] = useState<Sheet[]>([]);
+  useEffect(() => {
+    fetchSheets().then(setSheets, () => undefined);
+  }, []);
 
   const create = async (autostart: boolean) => {
     setBusy(true);
@@ -69,6 +74,8 @@ export function Home({ me, setMe, onLogout, go, nav, theme, setTheme }: Props) {
         </button>
       )}
 
+      <SheetBanners sheets={sheets} open={(id) => nav(`#/sheet/${id}`)} />
+
       <section className="panel home-panel">
         <button className="btn btn-primary btn-big" disabled={busy} onClick={() => create(true)}>
           {t("playBots")}
@@ -102,6 +109,11 @@ export function Home({ me, setMe, onLogout, go, nav, theme, setTheme }: Props) {
       </section>
 
       <nav className="home-tiles">
+        <button className="tile tile-wide" onClick={() => nav("#/sheet/new")}>
+          <span aria-hidden>📝</span>
+          {t("sheetTile")}
+          <small className="muted">{t("inPerson")}</small>
+        </button>
         <button className="tile" onClick={() => setSheet("leaderboard")}>
           <span aria-hidden>🏆</span>
           {t("leaderboard")}
