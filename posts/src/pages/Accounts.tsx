@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { del, post, put, useApi } from "../api";
 import { ago, num, SERVICE_COLOR, when } from "../format";
+import { CopyButton, Modal } from "../ui";
 import type { Account, AccountsData, AccountStatus, BufferChannel, Geo, ManualUpload, Platform, UploadMode } from "../types";
 
 const PLATFORMS: { id: Platform; label: string }[] = [
@@ -231,10 +232,6 @@ function Kpi({ label, value, hint }: { label: string; value: string; hint?: stri
       {hint && <div className="kpi-hint">{hint}</div>}
     </div>
   );
-}
-
-function copy(text: string) {
-  return navigator.clipboard?.writeText(text);
 }
 
 function AccountCard({ a, channel, onEdit, onChanged }: { a: Account; channel?: BufferChannel; onEdit: () => void; onChanged: () => void }) {
@@ -477,26 +474,6 @@ function Stat({ label, value }: { label: string; value: number | null | undefine
   );
 }
 
-function CopyButton({ text, get }: { text?: string; get?: () => Promise<string> }) {
-  const [done, setDone] = useState<string | null>(null);
-  return (
-    <button
-      className="link small"
-      onClick={async () => {
-        try {
-          await copy(text ?? (await get!()));
-          setDone("copied");
-        } catch (e) {
-          setDone((e as Error).message || "failed");
-        }
-        setTimeout(() => setDone(null), 1500);
-      }}
-    >
-      {done || "copy"}
-    </button>
-  );
-}
-
 /** Masked until "show"; the password is fetched on demand and hidden again after 20 seconds. */
 function Password({ id }: { id: number }) {
   const [pw, setPw] = useState<string | null>(null);
@@ -527,27 +504,6 @@ function Password({ id }: { id: number }) {
       <CopyButton get={fetchPw} />
       {err && <span className="error small">{err}</span>}
     </>
-  );
-}
-
-function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
-  useEffect(() => {
-    const key = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", key);
-    return () => window.removeEventListener("keydown", key);
-  }, [onClose]);
-  return (
-    <div className="modal-back" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="card modal" role="dialog" aria-modal="true" aria-label={title}>
-        <div className="row between">
-          <h2>{title}</h2>
-          <button className="link" onClick={onClose} aria-label="Close">
-            ✕
-          </button>
-        </div>
-        {children}
-      </div>
-    </div>
   );
 }
 
