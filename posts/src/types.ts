@@ -178,6 +178,34 @@ export interface Account {
   created_at: string;
   updated_at: string;
   pipeline: AccountPipeline | null;
+  /** manual = the pipeline emails a reminder to upload by hand at each slot; automatic = posted through Buffer. */
+  upload_mode: UploadMode;
+  manual_since: string | null;
+  week_hint_at: string | null;
+  manual: ManualInfo | null;
+}
+
+export type UploadMode = "manual" | "automatic";
+
+/** A clip emailed to a manual account to upload by hand. */
+export interface ManualUpload {
+  id: number;
+  account_id: number;
+  clip_id: number;
+  slot_at: string;
+  emailed_at: string | null;
+  done_at: string | null;
+  link: string | null;
+  title: string | null;
+  thumb_url: string | null;
+  video_url: string | null;
+}
+
+export interface ManualInfo {
+  /** day of manual uploads, 1 on the first day */
+  day: number;
+  next_at: string | null;
+  uploads: ManualUpload[];
 }
 
 export interface BufferChannel {
@@ -193,4 +221,6 @@ export interface AccountsData {
   buffer_channels: BufferChannel[];
   streamers: string[];
   encryption_ready: boolean;
+  email_ready: boolean;
+  services: string[];
 }

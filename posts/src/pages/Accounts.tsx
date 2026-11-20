@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { del, post, put, useApi } from "../api";
-import { ago, num, SERVICE_COLOR } from "../format";
-import type { Account, AccountsData, AccountStatus, BufferChannel, Geo, Platform } from "../types";
+import { ago, num, SERVICE_COLOR, when } from "../format";
+import type { Account, AccountsData, AccountStatus, BufferChannel, Geo, ManualUpload, Platform, UploadMode } from "../types";
 
 const PLATFORMS: { id: Platform; label: string }[] = [
   { id: "instagram", label: "Instagram" },
@@ -89,6 +89,13 @@ export default function Accounts() {
         <div className="banner warn">
           Passwords can't be saved yet. Add the <code>ACCOUNTS_KEY</code> variable to the posts API service in Railway (a long random
           string, never changed afterwards). Everything else works without it.
+        </div>
+      )}
+
+      {!data.email_ready && data.accounts.some((a) => a.upload_mode === "manual") && (
+        <div className="banner warn">
+          Upload reminders can't be emailed: mail isn't set up on the posts API service (<code>SMTP_HOST</code>, <code>SMTP_USER</code>,{" "}
+          <code>SMTP_PASSWORD</code>, <code>ALERT_EMAIL</code>).
         </div>
       )}
 
@@ -187,6 +194,7 @@ export default function Accounts() {
                         a={a}
                         channel={data.buffer_channels.find((c) => c.id === a.buffer_channel_id)}
                         onEdit={() => setEditing(a)}
+                        onChanged={reload}
                       />
                     ))}
                   </div>
@@ -229,7 +237,7 @@ function copy(text: string) {
   return navigator.clipboard?.writeText(text);
 }
 
-function AccountCard({ a, channel, onEdit }: { a: Account; channel?: BufferChannel; onEdit: () => void }) {
+function AccountCard({ a, channel, onEdit, onChanged }: { a: Account; channel?: BufferChannel; onEdit: () => void; onChanged: () => void }) {
   const s = stats(a);
   const status = STATUSES.find((x) => x.id === a.status) || STATUSES[0];
   return (
@@ -278,6 +286,8 @@ function AccountCard({ a, channel, onEdit }: { a: Account; channel?: BufferChann
         <dd>{a.has_password ? <Password id={a.id} /> : <span className="muted">not saved</span>}</dd>
       </dl>
 
+      <Uploads a={a} onEdit={onEdit} onChanged={onChanged} />
+
       <div className="astats">
         <Stat label="Followers" value={s.followers} />
         <Stat label="Views" value={s.views} />
@@ -286,7 +296,9 @@ function AccountCard({ a, channel, onEdit }: { a: Account; channel?: BufferChann
       </div>
 
       <div className="muted small">
-        {a.pipeline ? (
+        {a.pipeline && !a.buffer_channel_id ? (
+          "Views and posts from the uploads you recorded. Link a Buffer channel under Edit to track views."
+        ) : a.pipeline ? (
           <>
             Views and posts from the pipeline (Buffer: {channel?.name || "channel"})
             {a.pipeline.scheduled > 0 && ` · ${a.pipeline.scheduled} scheduled`}
@@ -302,6 +314,157 @@ function AccountCard({ a, channel, onEdit }: { a: Account; channel?: BufferChann
       </div>
       {a.notes && <p className="notes small">{a.notes}</p>}
     </article>
+  );
+}
+
+const WEEK_DAYS = 7;
+
+/** Upload mode switch, and for manual accounts the reminder emails with a place to record each upload's link. */
+function Uploads({ a, onEdit, onChanged }: { a: Account; onEdit: () => void; onChanged: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const live = a.status === "warming" || a.status === "active";
+  const setMode = async (mode: UploadMode) => {
+    if (mode === a.upload_mode) return;
+    setBusy(true);
+    setMsg(null);
+    try {
+      await post(`/accounts/${a.id}/mode`, { upload_mode: mode });
+      onChanged();
+    } catch (e) {
+      setMsg((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const sendNow = async () => {
+    setBusy(true);
+    setMsg(null);
+    try {
+      await post(`/accounts/${a.id}/upload-now`);
+      setMsg("Emailed. Check your inbox.");
+      onChanged();
+    } catch (e) {
+      setMsg((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const m = a.manual;
+  return (
+    <div className="uploads">
+      <div className="row between nomargin">
+        <span className="kpi-label">Uploads</span>
+        <div className="seg" role="group" aria-label="Upload mode">
+          {(["manual", "automatic"] as UploadMode[]).map((mode) => (
+            <button key={mode} className={a.upload_mode === mode ? "active" : ""} disabled={busy} aria-pressed={a.upload_mode === mode} onClick={() => setMode(mode)}>
+              {mode === "manual" ? "Manual" : "Automatic"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {a.upload_mode === "automatic" ? (
+        <div className="muted small">
+          {a.buffer_channel_id ? (
+            "Posted by the pipeline through Buffer at the usual slots."
+          ) : (
+            <>
+              Not linked to a Buffer channel, so nothing is posted.{" "}
+              <button className="link small" onClick={onEdit}>
+                Link one
+              </button>
+            </>
+          )}
+        </div>
+      ) : (
+        m && (
+          <>
+            <div className="small">
+              <b>Day {m.day}</b> <span className="muted">of {WEEK_DAYS}</span>
+              <span className="muted">
+                {" · "}
+                {!live ? `no emails while ${a.status}` : m.next_at ? `next email ${when(m.next_at)}` : "no slot left today"}
+              </span>
+            </div>
+            <div className="weekbar" aria-hidden="true">
+              <i style={{ width: `${Math.min(100, (m.day / WEEK_DAYS) * 100)}%` }} />
+            </div>
+            {m.day > WEEK_DAYS && (
+              <div className="hint small">
+                One week of manual uploads done. Switch to Automatic when you're ready{a.buffer_channel_id ? "." : " (link its Buffer channel first)."}
+              </div>
+            )}
+            {m.uploads.length > 0 && (
+              <ul className="uploadlist">
+                {m.uploads.map((u) => (
+                  <UploadRow key={u.id} u={u} onChanged={onChanged} />
+                ))}
+              </ul>
+            )}
+            <div className="row nomargin wrap">
+              <button className="small" disabled={busy || !live} onClick={sendNow}>
+                Email next clip now
+              </button>
+              {msg && <span className="muted small">{msg}</span>}
+            </div>
+          </>
+        )
+      )}
+      {a.upload_mode === "automatic" && msg && <span className="error small">{msg}</span>}
+    </div>
+  );
+}
+
+function UploadRow({ u, onChanged }: { u: ManualUpload; onChanged: () => void }) {
+  const [link, setLink] = useState(u.link || "");
+  const [open, setOpen] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const save = async () => {
+    setErr(null);
+    try {
+      await post(`/manual-uploads/${u.id}/done`, { link: link.trim() || null });
+      setOpen(false);
+      onChanged();
+    } catch (e) {
+      setErr((e as Error).message);
+    }
+  };
+  return (
+    <li>
+      <div className="row between nomargin">
+        <span className="ellipsis small" title={u.title || ""}>
+          {u.video_url ? (
+            <a href={u.video_url} target="_blank" rel="noreferrer">
+              {u.title || `Clip #${u.clip_id}`}
+            </a>
+          ) : (
+            u.title || `Clip #${u.clip_id}`
+          )}
+        </span>
+        {u.link ? (
+          <a className="pill ok" href={u.link} target="_blank" rel="noreferrer">
+            Posted
+          </a>
+        ) : u.done_at ? (
+          <span className="pill ok">Done</span>
+        ) : (
+          <button className="link small" onClick={() => setOpen(!open)}>
+            Add link
+          </button>
+        )}
+      </div>
+      <div className="muted small">{when(u.slot_at)}</div>
+      {open && (
+        <div className="inputrow">
+          <input value={link} placeholder="https:// link to the post" onChange={(e) => setLink(e.target.value)} autoFocus onKeyDown={(e) => e.key === "Enter" && save()} />
+          <button className="small" onClick={save}>
+            {link.trim() ? "Save" : "Uploaded"}
+          </button>
+        </div>
+      )}
+      {err && <span className="error small">{err}</span>}
+    </li>
   );
 }
 
