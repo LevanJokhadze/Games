@@ -7,10 +7,12 @@ import AnalyticsPage from "./pages/Analytics";
 import Moments from "./pages/Moments";
 import Campaigns from "./pages/Campaigns";
 import Accounts from "./pages/Accounts";
+import Calendar from "./pages/Calendar";
 import SettingsPage from "./pages/Settings";
 
 const PAGES = [
   { id: "overview", label: "Overview", el: <Overview /> },
+  { id: "calendar", label: "Calendar", el: <Calendar /> },
   { id: "review", label: "Review", el: <Review /> },
   { id: "posts", label: "Posts", el: <Posts /> },
   { id: "accounts", label: "Accounts", el: <Accounts /> },
