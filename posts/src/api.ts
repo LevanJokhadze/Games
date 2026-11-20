@@ -79,3 +79,4 @@ export function useApi<T>(path: string, everyMs = 0) {
   }, [reload, everyMs]);
   return { data, error, reload };
 }
+export const del = <T = unknown>(path: string) => api<T>(path, { method: "DELETE" });

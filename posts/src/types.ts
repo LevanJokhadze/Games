@@ -132,3 +132,65 @@ export interface EventRow {
   worker: string;
   message: string;
 }
+
+export type Platform = "instagram" | "tiktok" | "youtube";
+export type AccountStatus = "warming" | "active" | "paused" | "banned" | "retired";
+
+export interface Geo {
+  id: number;
+  code: string;
+  name: string;
+  sort: number;
+}
+
+/** Stats the pipeline measured for the account's Buffer channel. */
+export interface AccountPipeline {
+  posts: number;
+  scheduled: number;
+  failed: number;
+  views: number;
+  likes: number;
+  comments: number;
+  best_views: number;
+  views_7d: number;
+  paying: number;
+  last_post_at: string | null;
+  metrics_at: string | null;
+}
+
+export interface Account {
+  id: number;
+  geo_id: number;
+  platform: Platform;
+  handle: string;
+  login: string | null;
+  has_password: boolean;
+  profile_url: string | null;
+  status: AccountStatus;
+  streamers: string[];
+  buffer_channel_id: string | null;
+  followers: number | null;
+  total_views: number | null;
+  total_posts: number | null;
+  total_likes: number | null;
+  stats_at: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  pipeline: AccountPipeline | null;
+}
+
+export interface BufferChannel {
+  id: string;
+  name: string | null;
+  service: string | null;
+  connected: boolean;
+}
+
+export interface AccountsData {
+  geos: Geo[];
+  accounts: Account[];
+  buffer_channels: BufferChannel[];
+  streamers: string[];
+  encryption_ready: boolean;
+}

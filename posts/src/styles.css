@@ -511,6 +511,270 @@ td {
   height: 100%;
 }
 
+
+/* accounts */
+code,
+.mono {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 13px;
+}
+
+h3 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 6px 0 -4px;
+}
+
+.row.nomargin {
+  margin: 0;
+}
+
+.count {
+  display: inline-block;
+  min-width: 20px;
+  padding: 0 6px;
+  margin-left: 6px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.tabs button.active .count {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.geohead {
+  margin-bottom: 12px;
+}
+
+.geotitle {
+  font-size: 18px;
+  margin: 0;
+}
+
+.filters {
+  margin: 0 0 16px;
+}
+
+.filters .search {
+  width: min(280px, 100%);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 12px;
+  background: #221b45;
+  border: 1px solid #3d2f8a;
+  color: #c9bbff;
+}
+
+button.chip {
+  background: var(--panel-2);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+button.chip.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.chip .x {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 10px;
+  color: inherit;
+  opacity: 0.7;
+}
+
+.platform-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.platform-title i {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.platform .empty {
+  margin: 12px 0 0;
+}
+
+.accounts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.account {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.handle {
+  font-weight: 600;
+  font-size: 15px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.handle a {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.handle a:hover {
+  text-decoration: underline;
+}
+
+.creds {
+  display: grid;
+  grid-template-columns: 70px 1fr;
+  gap: 6px 10px;
+  margin: 0;
+  font-size: 13px;
+}
+
+.creds dt {
+  color: var(--muted);
+}
+
+.creds dd {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.astats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding: 10px 0 0;
+  border-top: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
+}
+
+.astats b {
+  font-size: 16px;
+}
+
+.notes {
+  margin: 0;
+  color: var(--muted);
+  white-space: pre-wrap;
+}
+
+/* modal */
+.modal-back {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: rgba(5, 8, 12, 0.7);
+  display: grid;
+  place-items: start center;
+  padding: 6vh 16px;
+  overflow-y: auto;
+}
+
+.modal {
+  width: min(640px, 100%);
+  margin: 0;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.modal h2 {
+  margin: 0;
+}
+
+.formgrid.two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.formgrid.four {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.span2 {
+  grid-column: 1 / -1;
+}
+
+.inputrow {
+  display: flex;
+  gap: 6px;
+}
+
+.tagbox {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px;
+}
+
+.tagbox input {
+  flex: 1;
+  min-width: 140px;
+  width: auto;
+  border: none;
+  background: none;
+  padding: 2px 4px;
+}
+
+.tagbox input:focus {
+  outline: none;
+}
+
+.tagbox:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+input:disabled {
+  opacity: 0.55;
+}
+
 /* login */
 .login {
   min-height: 100vh;
@@ -578,4 +842,26 @@ td {
     padding: 16px 14px 60px;
   }
 
+  .formgrid.two,
+  .formgrid.four {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .astats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+}
+
+.checkline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text);
+}
+
+.modal {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }

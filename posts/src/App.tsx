@@ -6,12 +6,14 @@ import Posts from "./pages/Posts";
 import AnalyticsPage from "./pages/Analytics";
 import Moments from "./pages/Moments";
 import Campaigns from "./pages/Campaigns";
+import Accounts from "./pages/Accounts";
 import SettingsPage from "./pages/Settings";
 
 const PAGES = [
   { id: "overview", label: "Overview", el: <Overview /> },
   { id: "review", label: "Review", el: <Review /> },
   { id: "posts", label: "Posts", el: <Posts /> },
+  { id: "accounts", label: "Accounts", el: <Accounts /> },
   { id: "analytics", label: "Analytics", el: <AnalyticsPage /> },
   { id: "moments", label: "Moments", el: <Moments /> },
   { id: "campaigns", label: "Campaigns", el: <Campaigns /> },
