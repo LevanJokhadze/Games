@@ -35,6 +35,7 @@ export default function Settings() {
         <section className="card">
           <h2>Workers</h2>
           {ov.data && <Workers beats={ov.data.workers} />}
+          {ov.data && <BufferQuota s={ov.data.settings} />}
           <div className="row wrap">
             {["discover", "render", "publish", "monitor"].map((w) => (
               <button
@@ -120,5 +121,32 @@ export default function Settings() {
         </table>
       </section>
     </>
+  );
+}
+
+function BufferQuota({ s }: { s: S }) {
+  const w = s.buffer_limits || {};
+  const paused = (s.buffer_paused_until || 0) * 1000 > Date.now();
+  const row = (key: string, label: string) =>
+    w[key] ? (
+      <li key={key}>
+        {label}: <b>{w[key].remaining}</b> of {w[key].quota} left
+      </li>
+    ) : null;
+  return (
+    <div className="small" style={{ marginTop: 12 }}>
+      <b>Buffer API allowance</b> (free plan, shared by every key)
+      <ul className="postlist">
+        {row("900", "15 minutes")}
+        {row("86400", "Today")}
+        {row("2592000", "30 days")}
+      </ul>
+      {paused && (
+        <p className="error">
+          Buffer calls paused until {new Date((s.buffer_paused_until || 0) * 1000).toLocaleString()} to stay under the limit.
+          Posts already scheduled still go out.
+        </p>
+      )}
+    </div>
   );
 }

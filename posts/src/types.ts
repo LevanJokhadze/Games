@@ -50,7 +50,15 @@ export interface Heartbeat {
   runs: number;
 }
 
+export interface BufferWindow {
+  quota: number;
+  remaining: number;
+  reset_at: number;
+}
+
 export interface Settings {
+  buffer_limits?: Record<string, BufferWindow>;
+  buffer_paused_until?: number;
   auto_approve: boolean;
   workers_paused: boolean;
   slots_et: string[];
