@@ -257,3 +257,43 @@ export interface WhopBounty {
   goal: string | null;
   host: string | null;
 }
+
+/** One item on the posting calendar. Times are given in Tbilisi (day, time) and US Eastern (time_et). */
+export interface CalendarEvent {
+  /** manual = you upload it by hand; automatic = Buffer posts it */
+  kind: "manual" | "automatic";
+  /** manual: planned (forecast), to_upload (emailed), done, posted. automatic: the Buffer post status */
+  status: string;
+  at: string;
+  day: string;
+  time: string;
+  time_et: string;
+  platform: string;
+  handle: string | null;
+  account_id: number | null;
+  profile_url: string | null;
+  upload_page: string | null;
+  upload_id?: number | null;
+  post_id?: number;
+  link: string | null;
+  error?: string | null;
+  clip_id: number | null;
+  title: string | null;
+  caption: string | null;
+  thumb_url: string | null;
+  video_url: string | null;
+  download_url: string | null;
+}
+
+export interface CalendarData {
+  timezone: string;
+  today: string;
+  start: string;
+  days: number;
+  now: string;
+  slots_et: string[];
+  slots_local: string[];
+  email_ready: boolean;
+  manual_accounts: number;
+  events: CalendarEvent[];
+}
