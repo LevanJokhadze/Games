@@ -31,3 +31,5 @@ npm run dev        # http://localhost:5173, talks to the API on http://localhost
 Service with root directory `posts`; it builds the `Dockerfile` and serves `dist/` with `serve` on `$PORT`.
 Set `VITE_API_URL` on the service, then add the custom domain `posts.lane.ge`
 (a CNAME record in the lane.ge Cloudflare zone pointing to the target Railway shows).
+
+Railway: project "Posts", service `posts-web-src` (root `/posts`, branch `posts`).
