@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { post, put, useApi } from "../api";
 import { ago } from "../format";
 import type { EventRow, Overview, Settings as S } from "../types";
+import AutoSubmit from "./AutoSubmit";
 import { Workers } from "./Overview";
 
 export default function Settings() {
@@ -37,7 +38,7 @@ export default function Settings() {
           {ov.data && <Workers beats={ov.data.workers} />}
           {ov.data && <BufferQuota s={ov.data.settings} />}
           <div className="row wrap">
-            {["discover", "render", "publish", "monitor"].map((w) => (
+            {["discover", "render", "publish", "monitor", "submit"].map((w) => (
               <button
                 key={w}
                 onClick={async () => {
@@ -103,6 +104,7 @@ export default function Settings() {
           </section>
         )}
       </div>
+      <AutoSubmit />
       <section className="card scroll">
         <h2>Log</h2>
         <table>
