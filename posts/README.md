@@ -32,4 +32,4 @@ Service with root directory `posts`; it builds the `Dockerfile` and serves `dist
 Set `VITE_API_URL` on the service, then add the custom domain `posts.lane.ge`
 (a CNAME record in the lane.ge Cloudflare zone pointing to the target Railway shows).
 
-Railway: project "Posts", service `posts-web-src` (root `/posts`, branch `posts`).
+Railway: project "Posts" (auto-deploys from `main`), service `posts-web-src` (root `/posts`, branch `posts`).
