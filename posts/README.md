@@ -10,6 +10,9 @@ Pages:
   Approve & schedule or Reject.
 - **Posts**: every Buffer post with status, public link (copy), views, likes, estimated pay, views still
   needed for the minimum, and a "submitted" tick for Content Rewards.
+- **Accounts**: geos (US, Russia, add more) → Instagram / TikTok / YouTube → each account with its login, password
+  (hidden until you press show; stored encrypted on the server), status, target streamers and stats. Accounts linked
+  to a Buffer channel show the pipeline's views and posts; others take stats typed in by hand.
 - **Analytics**: views per day by platform, pipeline funnel, campaigns, top posts with engagement rate
   (campaign needs 0.8%+).
 - **Moments**: Twitch clips found, their status and why one was skipped; retry.
