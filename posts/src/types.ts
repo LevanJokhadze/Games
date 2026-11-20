@@ -17,6 +17,12 @@ export interface Post {
   shares: number;
   saves: number;
   submitted: boolean;
+  submit_status: "pending" | "submitted" | "failed" | "agent" | "manual" | null;
+  submit_method: string | null;
+  submit_error: string | null;
+  submit_attempts: number | null;
+  submit_deadline: string | null;
+  submitted_at: string | null;
   title?: string;
   thumb_url?: string | null;
   campaign?: string;
@@ -77,6 +83,7 @@ export interface Overview {
   by_service: { service: string; sent: number; views: number }[];
   upcoming: { id: number; service: string; channel_name: string; due_at: string; title: string; thumb_url: string | null }[];
   to_submit: number;
+  submit_failed: number;
   workers: Heartbeat[];
   settings: Settings;
 }
@@ -123,6 +130,9 @@ export interface Campaign {
   lookback_hours: number;
   rules: string | null;
   active: boolean;
+  whop_bounty_id: string | null;
+  submit_url: string | null;
+  submit_window_minutes: number | null;
 }
 
 export interface EventRow {
@@ -223,4 +233,27 @@ export interface AccountsData {
   encryption_ready: boolean;
   email_ready: boolean;
   services: string[];
+}
+
+export interface SubmitStatus {
+  auto_submit: boolean;
+  methods: string[];
+  whop: { configured: boolean; connected: boolean; redirect_uri: string | null; connected_at: string | null };
+  browser: {
+    installed: boolean;
+    session: boolean;
+    saved_at: string | null;
+    check: { ok: boolean; at: number; error?: string; screenshot?: string | null } | null;
+  };
+  agent: { configured: boolean };
+  vault: boolean;
+  counts: Record<string, number>;
+}
+
+export interface WhopBounty {
+  id: string;
+  title: string | null;
+  status: string | null;
+  goal: string | null;
+  host: string | null;
 }

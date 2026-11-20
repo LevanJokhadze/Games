@@ -24,6 +24,12 @@ export default function Overview() {
           )}
         </div>
       )}
+      {data.submit_failed > 0 && (
+        <div className="banner warn">
+          Auto-submit failed for {data.submit_failed} live post{data.submit_failed > 1 ? "s" : ""}. <a href="#posts">Submit by hand</a>{" "}
+          before the deadline (it's in the email too).
+        </div>
+      )}
       {data.settings.workers_paused && <div className="banner warn">Workers are paused. Turn them back on under Workers & settings.</div>}
 
       <div className="kpis">

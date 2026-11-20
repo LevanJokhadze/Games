@@ -18,6 +18,7 @@ const EMPTY: Partial<Campaign> = {
   lookback_hours: 48,
   overlay_width: 600,
   overlay_y: 895,
+  submit_window_minutes: 30,
   active: true,
 };
 
@@ -113,6 +114,9 @@ function CampaignForm({ initial, onSaved }: { initial: Partial<Campaign>; onSave
         {number("overlay_y", "Overlay top (px of 1920)")}
         {text("cam_box", "Webcam box x:y:w:h (fractions)", "Empty = find the webcam automatically")}
         {number("title_secs", "Title shown for (seconds, 0 = whole clip)")}
+        {text("submit_url", "Submit page (auto-submit)", "Content Rewards page with the Submit button; empty = Campaign page")}
+        {number("submit_window_minutes", "Submit within (minutes of going live)")}
+        {text("whop_bounty_id", "Whop bounty id (optional)", "bnty_… if this campaign is on Whop's API; pick it under Auto-submit")}
       </div>
       <label>
         Campaign rules (notes)
