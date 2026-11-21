@@ -158,6 +158,14 @@ export interface Campaign {
   geo: string | null;
   /** post title wrapper, "{title}" = the AI title */
   title_template: string | null;
+  /** sponsor banner video (BigBalls): inserted at the payoff with the clip paused; null = no banner */
+  banner_url: string | null;
+  /** banner width in px of 1080 */
+  banner_width: number | null;
+  /** key colour like 0x00FF00; empty = automatic (alpha channel or the corner colour), "none" = no keying */
+  banner_key: string | null;
+  /** split layout: bottom videos to use instead of the built-in satisfying loops */
+  bottom_urls: string[];
 }
 
 export interface EventRow {
@@ -218,6 +226,8 @@ export interface Account {
   manual_since: string | null;
   week_hint_at: string | null;
   manual: ManualInfo | null;
+  /** takes clips of sponsor banner campaigns (BigBalls) */
+  banners: boolean;
 }
 
 export type UploadMode = "manual" | "automatic";

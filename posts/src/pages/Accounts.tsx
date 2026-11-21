@@ -257,8 +257,9 @@ function AccountCard({ a, channel, onEdit, onChanged }: { a: Account; channel?: 
         </div>
       </div>
 
-      {a.streamers.length > 0 && (
+      {(a.streamers.length > 0 || a.banners) && (
         <div className="chips">
+          {a.banners && <span className="chip static">Banner clips</span>}
           {a.streamers.map((x) => (
             <span key={x} className="chip static">
               {x}
@@ -733,6 +734,10 @@ function AccountForm({
               ))}
           </datalist>
         </div>
+        <label className="inline">
+          <input type="checkbox" checked={!!a.banners} onChange={(e) => set("banners", e.target.checked)} /> Banner clips: this account also
+          gets clips with a sponsor banner (BigBalls). TikTok bans gambling ads, so use an account you can afford to lose.
+        </label>
 
         <h3>Stats</h3>
         <label>

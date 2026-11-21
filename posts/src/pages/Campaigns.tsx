@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { post, put, useApi } from "../api";
+import { post, put, upload, useApi } from "../api";
 import type { Campaign } from "../types";
 import { RemoveButton } from "../ui";
 
@@ -27,6 +27,10 @@ const EMPTY: Partial<Campaign> = {
   overlay_width: 600,
   overlay_y: 895,
   submit_window_minutes: 30,
+  banner_url: null,
+  banner_width: 1000,
+  banner_key: "",
+  bottom_urls: [],
   active: true,
 };
 
@@ -146,6 +150,7 @@ function CampaignForm({ initial, onSaved }: { initial: Partial<Campaign>; onSave
           <select value={c.layout || "react"} onChange={(e) => set("layout", e.target.value)}>
             <option value="react">Zoomed: webcam on top, gameplay below (softer)</option>
             <option value="blur">Whole stream frame on a blurred background (sharp)</option>
+            <option value="split">Split screen: streamer on top, satisfying loop below</option>
           </select>
         </label>
         {text("overlay_url", "Logo overlay (PNG URL)", "Required by many campaigns; shown for the whole clip")}
@@ -166,6 +171,11 @@ function CampaignForm({ initial, onSaved }: { initial: Partial<Campaign>; onSave
         {number("submit_window_minutes", "Submit within (minutes of going live)")}
         {text("whop_bounty_id", "Whop bounty id (optional)", "bnty_… if this campaign is on Whop's API; pick it under Auto-submit")}
       </div>
+      <SplitAndBanner
+        c={c}
+        set={set}
+        onUploaded={(k, url) => (k === "banner" ? set("banner_url", url) : set("bottom_urls", [...(c.bottom_urls || []), url]))}
+      />
       <label>
         Campaign rules (notes)
         <textarea rows={6} value={c.rules || ""} onChange={(e) => set("rules", e.target.value)} />
@@ -178,5 +188,83 @@ function CampaignForm({ initial, onSaved }: { initial: Partial<Campaign>; onSave
         )}
       </div>
     </form>
+  );
+}
+
+function SplitAndBanner({
+  c,
+  set,
+  onUploaded,
+}: {
+  c: Partial<Campaign>;
+  set: <K extends keyof Campaign>(k: K, v: Campaign[K]) => void;
+  onUploaded: (kind: "banner" | "bottom", url: string) => void;
+}) {
+  const [busy, setBusy] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const send = async (kind: "banner" | "bottom", f: File | undefined) => {
+    if (!f || !c.id) return;
+    setBusy(kind);
+    setErr(null);
+    try {
+      const r = await upload<{ url: string }>(`/campaigns/${c.id}/upload?kind=${kind}&name=${encodeURIComponent(f.name)}`, f);
+      onUploaded(kind, r.url);
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  };
+  return (
+    <div className="formgrid">
+      <label>
+        Sponsor banner video
+        {c.banner_url ? (
+          <span className="small">
+            <a href={c.banner_url} target="_blank" rel="noreferrer">
+              Current banner
+            </a>{" "}
+            <button type="button" onClick={() => set("banner_url", null)}>
+              Remove
+            </button>
+          </span>
+        ) : (
+          <span className="muted small">No banner: clips have no sponsor ad</span>
+        )}
+        {c.id ? (
+          <input type="file" accept=".mp4,.mov,.webm,video/*" disabled={!!busy} onChange={(e) => send("banner", e.target.files?.[0])} />
+        ) : (
+          <span className="muted small">Save the campaign first, then upload its banner</span>
+        )}
+        <span className="muted small">
+          {busy === "banner"
+            ? "Uploading…"
+            : "Green-screen MP4 or MOV with transparency. Inserted 1 s before the payoff (never before 0:10), the clip pauses while it plays. Only accounts marked “Banner clips” get these clips."}
+        </span>
+      </label>
+      <label>
+        Banner width (px of 1080)
+        <input type="number" value={c.banner_width ?? 1000} onChange={(e) => set("banner_width", e.target.value === "" ? null : Number(e.target.value))} />
+      </label>
+      <label>
+        Banner key colour
+        <input value={c.banner_key ?? ""} placeholder="automatic" onChange={(e) => set("banner_key", e.target.value)} />
+        <span className="muted small">Empty = automatic; e.g. 0x00FF00, or “none” to keep the background</span>
+      </label>
+      <label>
+        Bottom videos (split screen)
+        <textarea
+          rows={3}
+          key={(c.bottom_urls || []).join("|")}
+          defaultValue={(c.bottom_urls || []).join("\n")}
+          onBlur={(e) => set("bottom_urls", e.target.value.split("\n").map((s) => s.trim()).filter(Boolean))}
+        />
+        {c.id && <input type="file" accept=".mp4,.mov,.webm,video/*" disabled={!!busy} onChange={(e) => send("bottom", e.target.files?.[0])} />}
+        <span className="muted small">
+          {busy === "bottom" ? "Uploading…" : "One link per line. Empty = our own loops (bouncing balls, plinko, pendulum wave)"}
+        </span>
+      </label>
+      {err && <p className="error">{err}</p>}
+    </div>
   );
 }
