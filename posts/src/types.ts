@@ -149,6 +149,7 @@ export interface Campaign {
   teaser: boolean | null;
   /** punch-in zooms on the payoff */
   punch_zoom: boolean | null;
+  layout: string | null;
 }
 
 export interface EventRow {

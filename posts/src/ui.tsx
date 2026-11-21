@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { api } from "./api";
+import { api, post } from "./api";
 
 export function copy(text: string) {
   return navigator.clipboard?.writeText(text);
@@ -114,5 +114,48 @@ export function RemoveButton({ path, what, onDone, className = "link small dange
       </button>
       {err && <span className="error"> {err}</span>}
     </span>
+  );
+}
+
+/** Renders the clip again with the current editing (e.g. after a quality fix) and swaps its video in place. */
+export function RerenderButton({ clipId, onDone, className = "button" }: { clipId: number; onDone: () => void; className?: string }) {
+  const [state, setState] = useState<"idle" | "running" | "done">("idle");
+  const [err, setErr] = useState<string | null>(null);
+  useEffect(() => {
+    if (state !== "running") return;
+    const t = setInterval(async () => {
+      try {
+        const r = await api<{ ids: number[] }>("/clips/rerendering");
+        if (!r.ids.includes(clipId)) {
+          setState("done");
+          onDone();
+        }
+      } catch {
+        /* keep polling */
+      }
+    }, 10000);
+    return () => clearInterval(t);
+  }, [state, clipId, onDone]);
+  if (state === "running") return <span className="small muted">Re-rendering in the new quality, about 3 minutes…</span>;
+  return (
+    <>
+      <button
+        type="button"
+        className={className}
+        title="Make this clip again with the latest editing and quality settings"
+        onClick={async () => {
+          setErr(null);
+          try {
+            await post(`/clips/${clipId}/rerender`);
+            setState("running");
+          } catch (e) {
+            setErr((e as Error).message);
+          }
+        }}
+      >
+        {state === "done" ? "Re-rendered ✓ (again?)" : "Re-render"}
+      </button>
+      {err && <span className="error small">{err}</span>}
+    </>
   );
 }

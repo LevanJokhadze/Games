@@ -17,6 +17,7 @@ const EMPTY: Partial<Campaign> = {
   target_secs: 18,
   teaser: true,
   punch_zoom: true,
+  layout: "react",
   daily_quota: 2,
   min_clip_views: 100,
   lookback_hours: 48,
@@ -126,6 +127,13 @@ function CampaignForm({ initial, onSaved }: { initial: Partial<Campaign>; onSave
             <option value="word">Word by word</option>
             <option value="bubble">Bubble</option>
             <option value="none">None (stream already has captions)</option>
+          </select>
+        </label>
+        <label>
+          Layout
+          <select value={c.layout || "react"} onChange={(e) => set("layout", e.target.value)}>
+            <option value="react">Zoomed: webcam on top, gameplay below (softer)</option>
+            <option value="blur">Whole stream frame on a blurred background (sharp)</option>
           </select>
         </label>
         {text("overlay_url", "Logo overlay (PNG URL)", "Required by many campaigns; shown for the whole clip")}
