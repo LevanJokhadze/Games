@@ -80,3 +80,23 @@ export function useApi<T>(path: string, everyMs = 0) {
   return { data, error, reload };
 }
 export const del = <T = unknown>(path: string) => api<T>(path, { method: "DELETE" });
+
+/** Sends a file as the raw request body (videos are too big for JSON). */
+export async function upload<T = unknown>(path: string, file: File): Promise<T> {
+  const token = getToken();
+  const res = await fetch(`${API_URL}/api${path}`, {
+    method: "PUT",
+    body: file,
+    headers: { "Content-Type": file.type || "application/octet-stream", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+  });
+  if (!res.ok) {
+    let msg = res.statusText;
+    try {
+      msg = (await res.json()).detail || msg;
+    } catch {
+      /* not json */
+    }
+    throw new ApiError(String(msg), res.status);
+  }
+  return res.json() as Promise<T>;
+}
