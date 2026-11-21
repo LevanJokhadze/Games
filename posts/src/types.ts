@@ -150,6 +150,12 @@ export interface Campaign {
   /** punch-in zooms on the payoff */
   punch_zoom: boolean | null;
   layout: string | null;
+  /** language of the AI title, hook and caption line: "en" or "ru" */
+  language: string | null;
+  /** geo code whose accounts get this campaign's clips (e.g. "RU"); empty = the default (US) accounts */
+  geo: string | null;
+  /** post title wrapper, "{title}" = the AI title */
+  title_template: string | null;
 }
 
 export interface EventRow {
