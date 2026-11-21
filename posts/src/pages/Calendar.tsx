@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { post, useApi } from "../api";
 import { SERVICE_COLOR } from "../format";
-import { CopyButton, Modal, RemoveButton } from "../ui";
+import { CopyButton, Modal, RemoveButton, RerenderButton } from "../ui";
 import type { CalendarData, CalendarEvent } from "../types";
 
 /** Everything on this page is in Tbilisi time (UTC+4, no daylight saving), whatever the device's zone. */
@@ -231,6 +231,7 @@ function Details({ e, onClose, onChanged }: { e: CalendarEvent; onClose: () => v
                   Download video
                 </a>
               )}
+              <RerenderButton clipId={e.clip_id} onDone={onChanged} />
               {e.kind === "manual" && e.upload_page && (
                 <a className="button" href={e.upload_page} target="_blank" rel="noreferrer">
                   Open {PLATFORM[e.platform] || e.platform} upload
