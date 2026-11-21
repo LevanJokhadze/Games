@@ -5,6 +5,11 @@ import type { GameRecord, Match, Profile } from "../types";
 import { Avatar } from "./Avatar";
 import { ScoreTable, scheduleFromPulkas, teamTotals } from "./Scoreboard";
 import { pts } from "../points";
+import { BuraRoundsTable } from "./BuraTable";
+import type { BuraRound } from "../types";
+
+/** Joker scores are written in hundreds; Bura scores are match points (to 11). */
+const score = (mode: string, n: number) => (mode === "bura" ? String(n) : pts(n));
 
 function fmtDate(iso: string, lang: string): string {
   const d = new Date(iso);
@@ -38,7 +43,8 @@ export function GameList({ games, userId, open }: { games: GameRecord[]; userId:
               <PlaceChip place={g.place} pairs={g.pairs} />
               <span className="game-main">
                 <span className="game-top">
-                  <strong>{pts(g.score)}</strong>
+                  <strong>{score(g.mode, g.score)}</strong>
+                  {g.mode === "bura" && <span className="tag">{t("gameBura")}</span>}
                   {g.pairs && <span className="tag">2×2</span>}
                   {g.mode === "nines" && <span className="tag">9×</span>}
                   {g.source === "offline" && <span className="tag">🃏 {t("inPerson")}</span>}
@@ -142,7 +148,9 @@ export function MatchPage({ id, me, back, openPlayer }: { id: string; me: Profil
   }, [id]);
 
   const order = m ? [...m.players].sort((a, b) => a.place - b.place || b.score - a.score) : [];
-  const team = m?.pairs ? teamTotals(m.players.map((p) => p.score)) : null;
+  const bura = m?.mode === "bura";
+  // Bura: both partners carry the team's match points, so the team score is one player's score.
+  const team = m?.pairs ? (bura ? ([m.players[0].score, m.players[1].score] as [number, number]) : teamTotals(m.players.map((p) => p.score))) : null;
   const you = m ? m.players.findIndex((p) => p.userId === me.id) : -1;
 
   return (
@@ -157,14 +165,18 @@ export function MatchPage({ id, me, back, openPlayer }: { id: string; me: Profil
         <>
           <section className="panel">
             <p className="muted center">
-              {fmtDate(m.finishedAt, lang)} · {m.source === "offline" ? `🃏 ${t("inPerson")} · ` : ""}{m.mode === "nines" ? t("modeNines") : t("modeStandard")} · {m.pairs ? t("pairs") : t("solo")} · {t("khishti")} {pts(m.khishti)}
+              {bura ? (
+                <>{fmtDate(m.finishedAt, lang)} · {t("gameBura")} · 2×2 · {t("bFirstTo", { n: 11 })}</>
+              ) : (
+                <>{fmtDate(m.finishedAt, lang)} · {m.source === "offline" ? `🃏 ${t("inPerson")} · ` : ""}{m.mode === "nines" ? t("modeNines") : t("modeStandard")} · {m.pairs ? t("pairs") : t("solo")} · {t("khishti")} {pts(m.khishti)}</>
+              )}
             </p>
             {team && (
               <div className="team-result">
                 {[0, 1].map((tm) => (
                   <div key={tm} className={`team-box team-${tm} ${team[tm] > team[1 - tm] ? "won" : ""}`}>
                     <span className="team-names">{m.players[tm].name} + {m.players[tm + 2].name}</span>
-                    <strong>{pts(team[tm])}</strong>
+                    <strong>{score(m.mode, team[tm])}</strong>
                     {team[tm] > team[1 - tm] && <span>🏆</span>}
                   </div>
                 ))}
@@ -181,7 +193,7 @@ export function MatchPage({ id, me, back, openPlayer }: { id: string; me: Profil
                   ) : (
                     <span className="name-link">{p.name}</span>
                   )}
-                  <strong>{pts(p.score)}</strong>
+                  <strong>{score(m.mode, p.score)}</strong>
                   <span className="rating-cell">
                     {p.ratingAfter !== null && <span className="muted small">{p.ratingAfter}</span>}
                     <Delta before={p.ratingBefore} after={p.ratingAfter} />
@@ -191,7 +203,10 @@ export function MatchPage({ id, me, back, openPlayer }: { id: string; me: Profil
             </ol>
           </section>
           <section className="panel">
-            <h3>{t("scores")}</h3>
+            <h3>{bura ? t("bRounds") : t("scores")}</h3>
+            {bura ? (
+              <BuraRoundsTable rounds={m.pulkas as unknown as BuraRound[]} names={[0, 1, 2, 3].map((s) => m.players.find((p) => p.seat === s)?.name ?? `#${s + 1}`)} />
+            ) : (
             <ScoreTable
               names={m.players.map((p) => p.name)}
               schedule={scheduleFromPulkas(m.pulkas)}
@@ -200,6 +215,7 @@ export function MatchPage({ id, me, back, openPlayer }: { id: string; me: Profil
               pairs={m.pairs}
               you={you >= 0 ? you : null}
             />
+            )}
           </section>
         </>
       )}

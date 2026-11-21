@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useI18n } from "../i18n";
-import type { Card, JokerMode, Play, RoomView, Suit } from "../types";
+import type { Card, GameView, JokerMode, Play, RoomView, Suit } from "../types";
 import { CardBack, CardView, SUIT_SYMBOL, SuitBadge, isRed } from "./CardView";
 import { Modal } from "./Modal";
 import { Rules } from "./Rules";
@@ -40,7 +40,7 @@ const canHover = typeof window !== "undefined" && window.matchMedia?.("(hover: h
 
 export function Table({ room, send, leave, clockOffset, openMatch, voice }: Props) {
   const { t } = useI18n();
-  const g = room.game!;
+  const g = room.game as GameView;
   const me = room.you ?? 0;
   const rel = (seat: number) => (seat - me + 4) % 4;
   const names = room.seats.map((s, i) => s?.name ?? `#${i + 1}`);
@@ -322,7 +322,7 @@ function JokerCaption({ mode }: { mode: JokerMode }) {
 
 /** Plays the card sounds for what changed at the table. */
 function useTableSounds(room: RoomView, myTurn: boolean, lastKey: string) {
-  const g = room.game!;
+  const g = room.game as GameView;
   const prev = useRef<{ deal: string; trick: number; lastKey: string; bids: number; myTurn: boolean; warn: boolean; chat: number; over: boolean; pulkas: number } | null>(null);
   const dealKey = `${g.pulka}-${g.dealInPulka}`;
   const bids = g.bids.filter((b) => b !== null).length;
@@ -358,7 +358,7 @@ function useTableSounds(room: RoomView, myTurn: boolean, lastKey: string) {
 
 function PlayerBadge({ pos, room, seat, timer, timerMax = 30_000, warn, compact, speaking }: { pos: string; room: RoomView; seat: number; timer: number | null; timerMax?: number; warn?: boolean; compact?: boolean; speaking?: boolean }) {
   const { t } = useI18n();
-  const g = room.game!;
+  const g = room.game as GameView;
   const s = room.seats[seat];
   const bid = g.bids[seat];
   const active = g.turn === seat && g.phase !== "gameOver";
@@ -487,7 +487,7 @@ function JokerDialog({ leading, onChoose, onCancel }: { leading: boolean; onChoo
 /** Always-visible running score: every player (or both teams) and their points. Tap for the full sheet. */
 function ScoreStrip({ room, onOpen }: { room: RoomView; onOpen: () => void }) {
   const { t } = useI18n();
-  const g = room.game!;
+  const g = room.game as GameView;
   const me = room.you ?? 0;
   const order = [0, 1, 2, 3].map((r) => (me + r) % 4);
   const best = Math.max(...g.totals);
@@ -523,7 +523,7 @@ function ScoreStrip({ room, onOpen }: { room: RoomView; onOpen: () => void }) {
 
 function GameOver({ room, send, leave, openScores, openMatch }: { room: RoomView; send: (m: object) => void; leave: () => void; openScores: () => void; openMatch: (id: string) => void }) {
   const { t } = useI18n();
-  const g = room.game!;
+  const g = room.game as GameView;
   const pairs = room.config.pairs;
   const team = teamTotals(g.totals);
   const rankScore = (s: number) => (pairs ? team[s % 2] : g.totals[s]);

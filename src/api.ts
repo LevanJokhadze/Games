@@ -146,8 +146,8 @@ export async function deleteSheet(s: Sheet): Promise<void> {
   await api(`/api/sheets/${s.id}`, { method: "DELETE" });
 }
 
-export async function createRoom(): Promise<string> {
-  const res = await fetch(`${API_URL}/api/rooms`, { method: "POST" });
+export async function createRoom(game: "joker" | "bura" = "joker"): Promise<string> {
+  const res = await fetch(`${API_URL}/api/rooms`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ game }) });
   if (!res.ok) throw new Error("create failed");
   return ((await res.json()) as { code: string }).code;
 }

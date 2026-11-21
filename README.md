@@ -26,6 +26,13 @@ drawn with CSS and inline SVG (the jokers are an original jester drawing, `src/c
   joker dialog (high/low, and the suit when leading), an always-visible score strip (names and points, or team totals in pairs) that opens the
   full scoreboard by pulka, rules sheet. Game over shows everyone's rating change.
 - Reconnects automatically; if you drop out a bot plays your turn after a short wait.
+- **Bura** (5 cards, 2 against 2): pick Joker or Bura on the home screen or in the lobby.
+  Tap the cards you want (1–5 of one suit to lead, or exactly as many as were led) and press Play.
+  Raise (davi, se, chari, panji, shashi), agree with your partner or answer the other team,
+  show a bura (5 trumps) or a malyutka (5 of one suit) with one button. Cards that don't beat
+  are shown face down to the others. The strip shows the match score to 11; tap it for every
+  round. Rules: `src/components/Rules.tsx` / `buraRules` in `src/i18n.ts`, table: `src/components/BuraTable.tsx`.
+  Needs the GamesBack version with Bura (merge both together).
 - **Score sheet for games played in person** (`#/sheet/new`, `src/components/Sheet.tsx`): pick the
   four players from registered accounts (search or "you've played with"), seating order, who deals
   first, game type, khishti and pairs. Each deal: tap what everyone said (dealer's forbidden number

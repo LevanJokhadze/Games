@@ -29,6 +29,21 @@ export function Home({ me, setMe, onLogout, go, nav, theme, setTheme }: Props) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [sheet, setSheet] = useState<SheetName>(null);
+  const [game, setGameState] = useState<"joker" | "bura">(() => {
+    try {
+      return localStorage.getItem("joker.game") === "bura" ? "bura" : "joker";
+    } catch {
+      return "joker";
+    }
+  });
+  const setGame = (g: "joker" | "bura") => {
+    setGameState(g);
+    try {
+      localStorage.setItem("joker.game", g);
+    } catch {
+      /* ignore */
+    }
+  };
   const [sheets, setSheets] = useState<Sheet[]>([]);
   useEffect(() => {
     fetchSheets().then(setSheets, () => undefined);
@@ -38,7 +53,7 @@ export function Home({ me, setMe, onLogout, go, nav, theme, setTheme }: Props) {
     setBusy(true);
     setErr(null);
     try {
-      go(await createRoom(), autostart);
+      go(await createRoom(game), autostart);
     } catch {
       setErr(t("errorCreate"));
     } finally {
@@ -77,11 +92,19 @@ export function Home({ me, setMe, onLogout, go, nav, theme, setTheme }: Props) {
       <SheetBanners sheets={sheets} open={(id) => nav(`#/sheet/${id}`)} />
 
       <section className="panel home-panel">
+        <div className="segmented game-switch" role="radiogroup" aria-label={t("chooseGame")}>
+          {(["joker", "bura"] as const).map((g) => (
+            <button key={g} role="radio" aria-checked={game === g} className={game === g ? "on" : ""} onClick={() => setGame(g)}>
+              {g === "joker" ? `★ ${t("gameJoker")}` : `🂡 ${t("gameBura")}`}
+            </button>
+          ))}
+        </div>
+        {game === "bura" && <p className="hint left">{t("buraHint")}</p>}
         <button className="btn btn-primary btn-big" disabled={busy} onClick={() => create(true)}>
-          {t("playBots")}
+          {game === "bura" ? t("playBura") : t("playBots")}
         </button>
         <button className="btn btn-big" disabled={busy} onClick={() => create(false)}>
-          {t("createRoom")}
+          {game === "bura" ? t("buraRoom") : t("createRoom")}
         </button>
         <form
           className="join-row"
@@ -132,7 +155,7 @@ export function Home({ me, setMe, onLogout, go, nav, theme, setTheme }: Props) {
         </button>
       </nav>
 
-      {sheet === "rules" && <Rules onClose={() => setSheet(null)} />}
+      {sheet === "rules" && <Rules game={game} onClose={() => setSheet(null)} />}
       {sheet === "leaderboard" && <Leaderboard me={me} onClose={() => setSheet(null)} openPlayer={(id) => nav(`#/player/${id}`)} />}
       {sheet === "settings" && <Settings theme={theme} setTheme={setTheme} onClose={() => setSheet(null)} />}
       {sheet === "profile" && <ProfileSheet me={me} setMe={setMe} onLogout={onLogout} onClose={() => setSheet(null)} />}
