@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { GameRecord, Match, Profile, RoomView } from "./types";
+import type { GameConfig, GameRecord, Match, Profile, RoomView, Sheet, SheetDeal } from "./types";
 
 const envUrl = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, "");
 export const API_URL =
@@ -115,6 +115,35 @@ export async function fetchUserGames(id: string, before?: string): Promise<GameR
 
 export async function fetchMatch(id: string): Promise<Match> {
   return (await api<{ match: Match }>(`/api/games/${encodeURIComponent(id)}`)).match;
+}
+
+/** Registered players by nickname or name, for picking who sits at a score sheet. */
+export async function searchPlayers(q: string): Promise<Profile[]> {
+  return (await api<{ players: Profile[] }>(`/api/users/search?q=${encodeURIComponent(q)}`)).players;
+}
+
+export async function fetchSheets(): Promise<Sheet[]> {
+  return (await api<{ sheets: Sheet[] }>("/api/sheets")).sheets;
+}
+
+export async function createSheet(p: { players: string[]; firstDealer: number; config: GameConfig }): Promise<Sheet> {
+  return (await api<{ sheet: Sheet }>("/api/sheets", { method: "POST", body: JSON.stringify(p) })).sheet;
+}
+
+export async function fetchSheet(id: string): Promise<Sheet> {
+  return (await api<{ sheet: Sheet }>(`/api/sheets/${encodeURIComponent(id)}`)).sheet;
+}
+
+export async function saveSheetDeals(s: Sheet, deals: SheetDeal[]): Promise<Sheet> {
+  return (await api<{ sheet: Sheet }>(`/api/sheets/${s.id}/deals`, { method: "PUT", body: JSON.stringify({ version: s.version, deals }) })).sheet;
+}
+
+export async function sheetAction(s: Sheet, action: "submit" | "confirm" | "reject"): Promise<Sheet> {
+  return (await api<{ sheet: Sheet }>(`/api/sheets/${s.id}/${action}`, { method: "POST", body: JSON.stringify({ version: s.version }) })).sheet;
+}
+
+export async function deleteSheet(s: Sheet): Promise<void> {
+  await api(`/api/sheets/${s.id}`, { method: "DELETE" });
 }
 
 export async function createRoom(): Promise<string> {

@@ -41,6 +41,7 @@ export function GameList({ games, userId, open }: { games: GameRecord[]; userId:
                   <strong>{pts(g.score)}</strong>
                   {g.pairs && <span className="tag">2×2</span>}
                   {g.mode === "nines" && <span className="tag">9×</span>}
+                  {g.source === "offline" && <span className="tag">🃏 {t("inPerson")}</span>}
                   <span className="muted small">{fmtDate(g.finishedAt, lang)}</span>
                 </span>
                 <span className="game-opps muted small">
@@ -156,7 +157,7 @@ export function MatchPage({ id, me, back, openPlayer }: { id: string; me: Profil
         <>
           <section className="panel">
             <p className="muted center">
-              {fmtDate(m.finishedAt, lang)} · {m.mode === "nines" ? t("modeNines") : t("modeStandard")} · {m.pairs ? t("pairs") : t("solo")} · {t("khishti")} {pts(m.khishti)}
+              {fmtDate(m.finishedAt, lang)} · {m.source === "offline" ? `🃏 ${t("inPerson")} · ` : ""}{m.mode === "nines" ? t("modeNines") : t("modeStandard")} · {m.pairs ? t("pairs") : t("solo")} · {t("khishti")} {pts(m.khishti)}
             </p>
             {team && (
               <div className="team-result">
