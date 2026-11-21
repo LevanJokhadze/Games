@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { post, useApi } from "../api";
 import { SERVICE_COLOR } from "../format";
-import { CopyButton, Modal } from "../ui";
+import { CopyButton, Modal, RemoveButton } from "../ui";
 import type { CalendarData, CalendarEvent } from "../types";
 
 /** Everything on this page is in Tbilisi time (UTC+4, no daylight saving), whatever the device's zone. */
@@ -273,6 +273,11 @@ function Details({ e, onClose, onChanged }: { e: CalendarEvent; onClose: () => v
       )}
 
       {e.error && <p className="error small">{e.error}</p>}
+      {e.post_id && e.kind !== "manual" && (
+        <div className="row">
+          <RemoveButton path={`/posts/${e.post_id}`} what="this post (cancelled in Buffer if still queued)" onDone={onChanged} />
+        </div>
+      )}
       {e.kind === "manual" && e.upload_id && e.status === "to_upload" && (
         <div>
           <b>After posting</b>
