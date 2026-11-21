@@ -32,31 +32,64 @@ export default function Overview() {
       )}
       {data.settings.workers_paused && <div className="banner warn">Workers are paused. Turn them back on under Workers & settings.</div>}
 
-      {data.campaigns && (
-        <p className="muted small">
-          {data.campaigns.filter((c) => c.active).length === 0 ? (
-            <>
-              No active campaign: nothing new is cut. <a href="#campaigns">Turn one on</a>
-            </>
-          ) : (
-            <>
-              Clipping for{" "}
-              {data.campaigns
-                .filter((c) => c.active)
-                .map((c) => `${c.name} (${money(Number(c.cpm))}/1K, min ${money(Number(c.min_payout))}${c.max_payout != null ? `, max ${money(Number(c.max_payout))}` : ""})`)
-                .join(" · ")}
-              . Earnings use each post's own campaign rate.
-            </>
-          )}
-        </p>
-      )}
-      <div className="kpis">
-        <Kpi label="Views (all live posts)" value={num(data.totals.views)} />
-        <Kpi label="Estimated earnings" value={money(data.est_earnings)} hint={`${data.paying_posts} post(s) over the campaign minimum`} />
-        <Kpi label="Live posts" value={num(data.posts.sent || 0)} hint={`${data.posts.scheduled || 0} scheduled · ${data.posts.error || 0} failed`} />
-        <Kpi label="Clips" value={num(Object.values(data.clips).reduce((a, b) => a + b, 0))} hint={`${review} waiting for review`} />
-        <Kpi label="Moments found" value={num(Object.values(data.moments).reduce((a, b) => a + b, 0))} hint={`${data.moments.new || 0} not cut yet`} />
-        <Kpi label="Likes · comments" value={`${num(data.totals.likes)} · ${num(data.totals.comments)}`} />
+      <div className="hero-row">
+        <section className="hero-dark">
+          <div>
+            <span className="hero-label">Estimated earnings</span>
+            <span className="hero-value">{money(data.est_earnings)}</span>
+          </div>
+          <div className="hero-rows">
+            <div>
+              <span>Posts over the campaign minimum</span>
+              <b>{data.paying_posts}</b>
+            </div>
+            <div>
+              <span>Views on all live posts</span>
+              <b>{num(data.totals.views)}</b>
+            </div>
+          </div>
+        </section>
+        <section className="hero-soft">
+          <div className="row between nomargin wrap">
+            <div>
+              <span className="muted">Clipping for</span>
+              <div className="hero-campaign">
+                {data.campaigns && data.campaigns.filter((c) => c.active).length === 0 ? (
+                  <>
+                    No active campaign. <a href="#campaigns">Turn one on</a>
+                  </>
+                ) : (
+                  (data.campaigns || [])
+                    .filter((c) => c.active)
+                    .map((c) => (
+                      <span key={c.id} className="campaign-chip">
+                        {c.name}
+                        <b>
+                          {money(Number(c.cpm))}
+                          <small> / 1K</small>
+                        </b>
+                      </span>
+                    ))
+                )}
+              </div>
+              {data.campaigns && data.campaigns.some((c) => c.active) && (
+                <span className="muted small">
+                  {data.campaigns
+                    .filter((c) => c.active)
+                    .map((c) => `min ${money(Number(c.min_payout))}${c.max_payout != null ? `, max ${money(Number(c.max_payout))}` : ""} per post`)
+                    .join(" · ")}
+                  . Earnings use each post's own campaign rate.
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="kpis">
+            <Kpi label="Live posts" value={num(data.posts.sent || 0)} hint={`${data.posts.scheduled || 0} scheduled · ${data.posts.error || 0} failed`} />
+            <Kpi label="Clips" value={num(Object.values(data.clips).reduce((a, b) => a + b, 0))} hint={`${review} waiting for review`} />
+            <Kpi label="Moments found" value={num(Object.values(data.moments).reduce((a, b) => a + b, 0))} hint={`${data.moments.new || 0} not cut yet`} />
+            <Kpi label="Likes · comments" value={`${num(data.totals.likes)} · ${num(data.totals.comments)}`} />
+          </div>
+        </section>
       </div>
 
       <div className="grid2">
