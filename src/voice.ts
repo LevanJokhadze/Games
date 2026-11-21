@@ -3,12 +3,25 @@
 // itself flows directly between browsers.
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { API_URL } from "./api";
 import type { RoomView } from "./types";
 
 type Msg = { t: string; [k: string]: unknown };
 
-function iceServers(): RTCIceServer[] {
-  const servers: RTCIceServer[] = [{ urls: ["stun:stun.cloudflare.com:3478", "stun:stun.l.google.com:19302"] }];
+/** Relay (TURN) servers from the game server, for networks that block direct connections. */
+async function fetchRelays(): Promise<RTCIceServer[]> {
+  try {
+    const r = await fetch(`${API_URL}/api/ice`);
+    if (!r.ok) return [];
+    const body = (await r.json()) as { iceServers?: RTCIceServer[] };
+    return Array.isArray(body.iceServers) ? body.iceServers : [];
+  } catch {
+    return [];
+  }
+}
+
+function iceServers(relays: RTCIceServer[]): RTCIceServer[] {
+  const servers: RTCIceServer[] = [{ urls: ["stun:stun.cloudflare.com:3478", "stun:stun.l.google.com:19302"] }, ...relays];
   const env = import.meta.env as Record<string, string | undefined>;
   // Optional TURN relay for players behind strict mobile networks.
   if (env.VITE_TURN_URLS) {
@@ -28,11 +41,26 @@ interface Peer {
 export const voiceSupported =
   typeof window !== "undefined" && typeof RTCPeerConnection !== "undefined" && !!navigator.mediaDevices?.getUserMedia;
 
+export type LinkState = "connecting" | "connected" | "failed";
+
 export function useVoice(room: RoomView | null, send: (m: object) => void, subscribe: (fn: (m: Msg) => void) => () => void) {
   const [joined, setJoined] = useState(false);
   const [talking, setTalking] = useState(false);
   const [speaking, setSpeaking] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
+  /** Connection to each other person in voice. */
+  const [links, setLinks] = useState<Record<string, LinkState>>({});
+  const relays = useRef<RTCIceServer[]>([]);
+  const setLink = (id: string, st: LinkState | null) =>
+    setLinks((prev) => {
+      if (st === null) {
+        if (!(id in prev)) return prev;
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      }
+      return prev[id] === st ? prev : { ...prev, [id]: st };
+    });
   const stream = useRef<MediaStream | null>(null);
   const peers = useRef(new Map<string, Peer>());
   const me = room?.peer ?? "";
@@ -46,13 +74,20 @@ export function useVoice(room: RoomView | null, send: (m: object) => void, subsc
     p.audio.srcObject = null;
     p.audio.remove();
     peers.current.delete(id);
+    setLink(id, null);
+  };
+
+  /** Phones only start audio after a tap: retry any player that is still paused. */
+  const resumeAudio = () => {
+    for (const p of peers.current.values()) if (p.audio.srcObject && p.audio.paused) p.audio.play().catch(() => {});
   };
 
   const getPeer = useCallback(
     (id: string): Peer => {
       const existing = peers.current.get(id);
       if (existing) return existing;
-      const pc = new RTCPeerConnection({ iceServers: iceServers() });
+      const pc = new RTCPeerConnection({ iceServers: iceServers(relays.current) });
+      setLink(id, "connecting");
       const audio = document.createElement("audio");
       audio.autoplay = true;
       audio.setAttribute("playsinline", "");
@@ -77,8 +112,18 @@ export function useVoice(room: RoomView | null, send: (m: object) => void, subsc
         audio.srcObject = e.streams[0] ?? new MediaStream([e.track]);
         audio.play().catch(() => {});
       };
+      let restarts = 0;
       pc.onconnectionstatechange = () => {
-        if (pc.connectionState === "failed") pc.restartIce();
+        const st = pc.connectionState;
+        if (st === "connected") {
+          restarts = 0;
+          setLink(id, "connected");
+        } else if (st === "failed") {
+          if (restarts++ < 2) {
+            setLink(id, "connecting");
+            pc.restartIce();
+          } else setLink(id, "failed");
+        } else if (st === "connecting" || st === "new") setLink(id, "connecting");
       };
       return peer;
     },
@@ -139,17 +184,34 @@ export function useVoice(room: RoomView | null, send: (m: object) => void, subsc
     for (const id of want) getPeer(id);
   }, [joined, key]);
 
+  // After a dropped connection the server forgets that we joined voice, and everyone else hangs
+  // up on us while the talk light still works. Tell it again whenever it shows us out of voice.
+  const meInVoice = room?.people.find((p) => p.peer === me)?.voice;
+  useEffect(() => {
+    if (joined && meInVoice === false) send({ t: "voice", on: true });
+  }, [joined, meInVoice, me, send]);
+
+  // Keep the mic open a moment after release so the last word isn't cut off.
+  const tail = useRef<number | undefined>(undefined);
   const stopTalk = useCallback(() => {
     const track = stream.current?.getAudioTracks()[0];
-    if (!track || !track.enabled) return;
-    track.enabled = false;
+    if (!track || !track.enabled || tail.current !== undefined) return;
     setTalking(false);
     send({ t: "talk", on: false });
+    tail.current = window.setTimeout(() => {
+      tail.current = undefined;
+      track.enabled = false;
+    }, 300);
   }, [send]);
 
   const startTalk = useCallback(() => {
+    resumeAudio();
     const track = stream.current?.getAudioTracks()[0];
-    if (!track || track.enabled) return;
+    if (!track) return;
+    if (tail.current !== undefined) {
+      window.clearTimeout(tail.current);
+      tail.current = undefined;
+    } else if (track.enabled) return;
     track.enabled = true;
     setTalking(true);
     send({ t: "talk", on: true });
@@ -158,8 +220,12 @@ export function useVoice(room: RoomView | null, send: (m: object) => void, subsc
   const join = useCallback(async () => {
     setError(null);
     try {
-      const s = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+      const [s, r] = await Promise.all([
+        navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 } }),
+        fetchRelays(),
+      ]);
       s.getAudioTracks().forEach((t) => (t.enabled = false));
+      relays.current = r;
       stream.current = s;
       setJoined(true);
       send({ t: "voice", on: true });
@@ -200,6 +266,13 @@ export function useVoice(room: RoomView | null, send: (m: object) => void, subsc
     };
   }, [joined, startTalk, stopTalk]);
 
+  // Any tap lets paused audio start on phones.
+  useEffect(() => {
+    if (!joined) return;
+    window.addEventListener("pointerdown", resumeAudio);
+    return () => window.removeEventListener("pointerdown", resumeAudio);
+  }, [joined]);
+
   // Leave cleanly when the table closes.
   useEffect(
     () => () => {
@@ -212,7 +285,7 @@ export function useVoice(room: RoomView | null, send: (m: object) => void, subsc
 
   const all = new Set(speaking);
   if (talking && me) all.add(me);
-  return { joined, join, leave, talking, startTalk, stopTalk, speaking: all, error };
+  return { joined, join, leave, talking, startTalk, stopTalk, speaking: all, error, links };
 }
 
 export type Voice = ReturnType<typeof useVoice>;

@@ -2,7 +2,7 @@ import { useI18n } from "../i18n";
 import type { GameView, PulkaResult, RoomView } from "../types";
 import { onPremium } from "../premium";
 import { Modal } from "./Modal";
-import { bidText, pts } from "../points";
+import { bidBalance, bidText, pts } from "../points";
 
 /** Combined points of the two teams in pairs mode (seats 0 & 2, 1 & 3). */
 export function teamTotals(totals: number[]): [number, number] {
@@ -65,7 +65,18 @@ export function ScoreTable({ names, schedule, pulkas, totals, pairs, you, curren
                 const isCurrent = !!current && p === current.pulka && d === current.deal;
                 return (
                   <tr key={`${p}-${d}`} className={isCurrent ? "current" : ""}>
-                    <td className="size">{size}</td>
+                    <td className="size">
+                      {size}
+                      {(() => {
+                        const b = deal ? bidBalance(deal.bids, size) : isCurrent ? bidBalance(current!.bids, size) : null;
+                        return b ? (
+                          <small className={`bal ${b.kind}`} title={t(b.kind === "under" ? "underBidHint" : "overBidHint", { n: b.n })}>
+                            {b.kind === "under" ? "−" : "+"}
+                            {b.n}
+                          </small>
+                        ) : null;
+                      })()}
+                    </td>
                     {[0, 1, 2, 3].map((i) => {
                       if (deal) {
                         const made = deal.bids[i] === deal.took[i];
@@ -145,6 +156,9 @@ export function Scoreboard({ room, onClose }: { room: RoomView; onClose: () => v
         current={g.phase === "gameOver" ? null : { pulka: g.pulka, deal: g.dealInPulka, bids: g.bids, took: g.took }}
         premiumNow={[0, 1, 2, 3].map((i) => onPremium(g, i))}
       />
+      <p className="hint left bal-legend">
+        <span className="bal under">−n</span> {t("underBid", { n: "" }).trim()} · <span className="bal over">+n</span> {t("overBid", { n: "" }).trim()}
+      </p>
     </Modal>
   );
 }
