@@ -2,6 +2,7 @@ import { useState } from "react";
 import { patch, post, useApi } from "../api";
 import { ago, num } from "../format";
 import type { Clip } from "../types";
+import { RemoveButton } from "../ui";
 
 const TABS = [
   { id: "review", label: "Waiting" },
@@ -135,6 +136,7 @@ function ClipCard({ clip, onChange }: { clip: Clip; onChange: () => void }) {
               Approve after all
             </button>
           )}
+          <RemoveButton path={`/clips/${clip.id}`} what="this clip and all its posts" onDone={onChange} />
         </div>
       </div>
     </article>

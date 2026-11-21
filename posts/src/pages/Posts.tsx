@@ -2,6 +2,7 @@ import { useState } from "react";
 import { post, useApi } from "../api";
 import { money, num, SERVICE_LABEL, when } from "../format";
 import type { Post } from "../types";
+import { RemoveButton } from "../ui";
 
 const TBILISI = (iso: string) =>
   new Date(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Tbilisi" });
@@ -87,6 +88,7 @@ export default function Posts() {
               <th>Likes</th>
               <th>Est. pay</th>
               <th>Content Rewards</th>
+              <th />
             </tr>
           </thead>
           <tbody>
@@ -128,6 +130,9 @@ export default function Posts() {
                   <td>{money(p.est_pay)}</td>
                   <td>
                     <SubmitCell p={p} reload={reload} />
+                  </td>
+                  <td>
+                    <RemoveButton path={`/posts/${p.id}`} what="this post" onDone={reload} />
                   </td>
                 </tr>
               );

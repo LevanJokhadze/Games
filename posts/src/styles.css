@@ -2256,3 +2256,13 @@ button.chip.active,
     bottom: 16px;
   }
 }
+
+button.link.danger {
+  color: var(--danger);
+}
+.remove-ask, .remove-result {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { post, put, useApi } from "../api";
 import type { Campaign } from "../types";
+import { RemoveButton } from "../ui";
 
 const EMPTY: Partial<Campaign> = {
   name: "",
@@ -152,6 +153,9 @@ function CampaignForm({ initial, onSaved }: { initial: Partial<Campaign>; onSave
       <div className="row">
         <button className="primary">Save</button>
         {msg && <span className="muted">{msg}</span>}
+        {c.id && (
+          <RemoveButton path={`/campaigns/${c.id}`} what={`${c.name} with all its clips and posts`} onDone={onSaved} />
+        )}
       </div>
     </form>
   );
