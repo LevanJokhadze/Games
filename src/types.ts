@@ -150,6 +150,8 @@ export interface Person {
 export interface GameRecord {
   id: string;
   finishedAt: string;
+  /** "offline" = played in person and written on a score sheet. */
+  source?: string;
   mode: string;
   pairs: boolean;
   score: number;
@@ -174,6 +176,7 @@ export interface MatchPlayer {
 export interface Match {
   id: string;
   finishedAt: string;
+  source?: string;
   mode: string;
   khishti: number;
   pairs: boolean;
@@ -240,4 +243,43 @@ export interface BuraView {
   canBura: boolean;
   canMalyutka: boolean;
   canRaiseAgain: boolean;
+}
+
+/** One deal on an in-person score sheet; `took` is null while the deal is being played. */
+export interface SheetDeal {
+  bids: number[];
+  took: number[] | null;
+}
+
+export interface SheetPlayer {
+  id: string;
+  nickname: string;
+  firstName: string;
+  lastName: string;
+  rating: number;
+  avatarUrl: string;
+}
+
+/** Score sheet of a Joker game played in person with real cards. */
+export interface Sheet {
+  id: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  version: number;
+  status: "recording" | "pending" | "rated" | "cancelled";
+  config: GameConfig;
+  players: SheetPlayer[];
+  firstDealer: number;
+  deals: SheetDeal[];
+  confirmed: string[];
+  rejected: { userId: string; at: string } | null;
+  matchId: string | null;
+  ratingChanges: (RatingChange | null)[] | null;
+  score: { schedule: number[][]; pulkas: PulkaResult[]; totals: number[]; done: number; count: number; complete: boolean };
+  /** Dealer of the next deal to write, -1 when all deals are written. */
+  dealer: number;
+  you: number | null;
+  canEdit: boolean;
+  mustConfirm: boolean;
 }

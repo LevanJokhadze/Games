@@ -2792,6 +2792,7 @@ select {
 }
 .link-dot.link-failed {
   background: var(--danger);
+}
 /* ---------- Sounds ---------- */
 .sound-toggle {
   width: 100%;
@@ -2802,4 +2803,282 @@ select {
 }
 .rules-top {
   margin-bottom: 12px;
+}
+
+/* ---------- Score sheet for games played in person ---------- */
+.tile-wide {
+  grid-column: 1 / -1;
+  flex-direction: row;
+  gap: 10px;
+  min-height: 60px;
+}
+.tile-wide small {
+  font-weight: 600;
+}
+.sheet-banner.quiet {
+  border-color: var(--panel-border);
+  background: var(--panel);
+}
+.seat-row.picking {
+  outline: 1px solid var(--accent);
+}
+.seat-pick {
+  flex: 1;
+  text-align: left;
+  color: var(--muted);
+}
+.seat-name small {
+  font-weight: 600;
+}
+.player-search {
+  flex-basis: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.player-search .code-input {
+  width: 100%;
+  text-transform: none;
+  letter-spacing: 0;
+  text-align: left;
+}
+.pick-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+.dealer-pick {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.dealer-pick button {
+  min-height: 44px;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid var(--panel-border);
+  background: rgba(255, 255, 255, 0.06);
+  font-weight: 700;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dealer-pick button.on {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: transparent;
+}
+.dealer-pick .dice {
+  grid-column: 1 / -1;
+  background: transparent;
+  font-weight: 600;
+}
+.sheet-totals {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  position: sticky;
+  top: calc(4px + var(--safe-top));
+  z-index: 5;
+  padding: 8px;
+  border-radius: 16px;
+  background: var(--panel-solid);
+  border: 1px solid var(--panel-border);
+}
+.st-player {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 4px 2px;
+  border-radius: 10px;
+}
+.st-player.me {
+  background: rgba(245, 179, 1, 0.12);
+}
+.st-player.team-0 {
+  box-shadow: inset 0 -3px 0 var(--team-0);
+}
+.st-player.team-1 {
+  box-shadow: inset 0 -3px 0 var(--team-1);
+}
+.st-name {
+  font-size: 0.78rem;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.st-player strong {
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+}
+.st-player .delta {
+  min-width: 0;
+  text-align: center;
+  font-size: 0.8rem;
+}
+.st-team {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 0.8rem;
+}
+.st-team .team-0 {
+  color: var(--team-0);
+}
+.st-team .team-1 {
+  color: var(--team-1);
+}
+.dealer-dot {
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  margin-right: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 0.62rem;
+  font-weight: 800;
+  vertical-align: 1px;
+}
+.deal-entry.is-editing {
+  border-color: var(--accent);
+}
+.deal-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.deal-head .muted {
+  font-size: 0.85rem;
+}
+.entry-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.entry-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+}
+.entry-row.team-0 {
+  box-shadow: inset 4px 0 0 var(--team-0);
+}
+.entry-row.team-1 {
+  box-shadow: inset 4px 0 0 var(--team-1);
+}
+.entry-name {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+  gap: 6px;
+}
+.chip {
+  min-height: 44px;
+  border-radius: 10px;
+  border: 1px solid var(--panel-border);
+  background: rgba(0, 0, 0, 0.22);
+  font-weight: 800;
+  font-size: 1.05rem;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+.chip.on {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: transparent;
+}
+.chip:disabled {
+  opacity: 0.25;
+  cursor: default;
+  text-decoration: line-through;
+}
+.bal-line {
+  margin: 0;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+.bal-line.bal {
+  display: block;
+  font-size: 0.95rem;
+}
+.bal-line.bad {
+  color: var(--danger);
+}
+.confirm-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.confirm-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.confirm-list li span:nth-child(2) {
+  flex: 1;
+  font-weight: 700;
+}
+.confirm-list li.ok .small {
+  color: var(--ok);
+}
+.sheet-note {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-weight: 700;
+}
+.sheet-note.warn {
+  background: rgba(255, 107, 107, 0.14);
+  border: 1px solid rgba(255, 107, 107, 0.4);
+}
+.sheet-note.ok {
+  background: rgba(94, 224, 143, 0.12);
+  border: 1px solid rgba(94, 224, 143, 0.4);
+}
+.score-table tr.tappable {
+  cursor: pointer;
+}
+.score-table tr.tappable:active,
+.score-table tr.editing {
+  background: rgba(245, 179, 1, 0.22);
+}
+.sheet-page .score-table {
+  table-layout: fixed;
+}
+.sheet-page .score-table th:first-child,
+.sheet-page .score-table td:first-child {
+  width: 15%;
+}
+.sheet-page .score-table th {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

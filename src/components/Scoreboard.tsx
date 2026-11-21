@@ -28,10 +28,14 @@ export interface ScoreTableProps {
   current?: Current | null;
   /** Players still on premium in the current pulka. */
   premiumNow?: boolean[];
+  /** Makes written deals tappable (score sheet: correct a deal). */
+  onDealClick?: (pulka: number, deal: number) => void;
+  /** Deal being corrected, highlighted. */
+  editing?: { pulka: number; deal: number } | null;
 }
 
 /** The full Joker score sheet: every deal of every pulka, bids/tricks, pulka sums and totals. */
-export function ScoreTable({ names, schedule, pulkas, totals, pairs, you, current, premiumNow }: ScoreTableProps) {
+export function ScoreTable({ names, schedule, pulkas, totals, pairs, you, current, premiumNow, onDealClick, editing }: ScoreTableProps) {
   const { t } = useI18n();
   const team = pairs ? teamTotals(totals) : null;
   return (
@@ -63,8 +67,16 @@ export function ScoreTable({ names, schedule, pulkas, totals, pairs, you, curren
               ...sizes.map((size, d) => {
                 const deal = res?.deals[d];
                 const isCurrent = !!current && p === current.pulka && d === current.deal;
+                const isEditing = !!editing && p === editing.pulka && d === editing.deal;
+                const tap = deal && onDealClick ? () => onDealClick(p, d) : undefined;
                 return (
-                  <tr key={`${p}-${d}`} className={isCurrent ? "current" : ""}>
+                  <tr
+                    key={`${p}-${d}`}
+                    className={`${isCurrent ? "current" : ""} ${isEditing ? "editing" : ""} ${tap ? "tappable" : ""}`}
+                    onClick={tap}
+                    onKeyDown={tap ? (e) => (e.key === "Enter" || e.key === " ") && tap() : undefined}
+                    tabIndex={tap ? 0 : undefined}
+                  >
                     <td className="size">
                       {size}
                       {(() => {

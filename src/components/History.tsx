@@ -47,6 +47,7 @@ export function GameList({ games, userId, open }: { games: GameRecord[]; userId:
                   {g.mode === "bura" && <span className="tag">{t("gameBura")}</span>}
                   {g.pairs && <span className="tag">2×2</span>}
                   {g.mode === "nines" && <span className="tag">9×</span>}
+                  {g.source === "offline" && <span className="tag">🃏 {t("inPerson")}</span>}
                   <span className="muted small">{fmtDate(g.finishedAt, lang)}</span>
                 </span>
                 <span className="game-opps muted small">
@@ -167,7 +168,7 @@ export function MatchPage({ id, me, back, openPlayer }: { id: string; me: Profil
               {bura ? (
                 <>{fmtDate(m.finishedAt, lang)} · {t("gameBura")} · 2×2 · {t("bFirstTo", { n: 11 })}</>
               ) : (
-                <>{fmtDate(m.finishedAt, lang)} · {m.mode === "nines" ? t("modeNines") : t("modeStandard")} · {m.pairs ? t("pairs") : t("solo")} · {t("khishti")} {pts(m.khishti)}</>
+                <>{fmtDate(m.finishedAt, lang)} · {m.source === "offline" ? `🃏 ${t("inPerson")} · ` : ""}{m.mode === "nines" ? t("modeNines") : t("modeStandard")} · {m.pairs ? t("pairs") : t("solo")} · {t("khishti")} {pts(m.khishti)}</>
               )}
             </p>
             {team && (

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ApiError, fetchMe, login, register, setToken, useRoom } from "./api";
 import { MatchPage, PlayerPage } from "./components/History";
 import { Home } from "./components/Home";
+import { NewSheetPage, SheetPage } from "./components/Sheet";
 import { PasswordField, ProfileForm } from "./components/ProfileForm";
 import { Lobby } from "./components/Lobby";
 import { Table } from "./components/Table";
@@ -30,7 +31,9 @@ type Route =
   | { page: "home" }
   | { page: "room"; code: string }
   | { page: "match"; id: string }
-  | { page: "player"; id: string };
+  | { page: "player"; id: string }
+  | { page: "newSheet" }
+  | { page: "sheet"; id: string };
 
 function parseHash(): Route {
   const h = location.hash;
@@ -40,6 +43,9 @@ function parseHash(): Route {
   if (m) return { page: "match", id: m[1] };
   m = h.match(/^#\/player\/([0-9a-f-]{36})$/i);
   if (m) return { page: "player", id: m[1] };
+  if (h === "#/sheet/new") return { page: "newSheet" };
+  m = h.match(/^#\/sheet\/([0-9a-f-]{36})$/i);
+  if (m) return { page: "sheet", id: m[1] };
   return { page: "home" };
 }
 
@@ -151,6 +157,13 @@ export function App() {
           />
         ) : route.page === "match" ? (
           <MatchPage key={route.id} id={route.id} me={me} back={back} openPlayer={(id) => nav(`#/player/${id}`)} />
+        ) : route.page === "newSheet" ? (
+          <NewSheetPage me={me} back={back} open={(id) => {
+            history.replaceState(null, "", `#/sheet/${id}`);
+            setRoute({ page: "sheet", id });
+          }} />
+        ) : route.page === "sheet" ? (
+          <SheetPage key={route.id} id={route.id} me={me} back={back} openMatch={(id) => nav(`#/match/${id}`)} />
         ) : route.page === "player" ? (
           <PlayerPage key={route.id} id={route.id} me={me} back={back} openMatch={(id) => nav(`#/match/${id}`)} />
         ) : (

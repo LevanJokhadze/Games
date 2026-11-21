@@ -33,6 +33,12 @@ drawn with CSS and inline SVG (the jokers are an original jester drawing, `src/c
   are shown face down to the others. The strip shows the match score to 11; tap it for every
   round. Rules: `src/components/Rules.tsx` / `buraRules` in `src/i18n.ts`, table: `src/components/BuraTable.tsx`.
   Needs the GamesBack version with Bura (merge both together).
+- **Score sheet for games played in person** (`#/sheet/new`, `src/components/Sheet.tsx`): pick the
+  four players from registered accounts (search or "you've played with"), seating order, who deals
+  first, game type, khishti and pairs. Each deal: tap what everyone said (dealer's forbidden number
+  crossed out, შეტენვა/წაგლეჯვა shown), then what everyone took (the fourth fills in by itself).
+  Tap any deal in the table to correct it. The other players follow the sheet live on their own
+  phones, and the game counts for rating and history once all four confirm it.
 
 ## Development
 
