@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { post, put, upload, useApi } from "../api";
-import type { Campaign } from "../types";
+import type { Campaign, TrendVideo } from "../types";
 import { RemoveButton } from "../ui";
 
 const EMPTY: Partial<Campaign> = {
@@ -244,7 +244,8 @@ function SplitAndBanner({
       </label>
       <label>
         Banner width (px of 1080)
-        <input type="number" value={c.banner_width ?? 1000} onChange={(e) => set("banner_width", e.target.value === "" ? null : Number(e.target.value))} />
+        <input type="number" value={c.banner_width ?? 0} onChange={(e) => set("banner_width", e.target.value === "" ? null : Number(e.target.value))} />
+        <span className="muted small">0 = fit the banner’s artwork to the clip’s width (30%+ of the screen)</span>
       </label>
       <label>
         Banner key colour
@@ -261,10 +262,90 @@ function SplitAndBanner({
         />
         {c.id && <input type="file" accept=".mp4,.mov,.webm,video/*" disabled={!!busy} onChange={(e) => send("bottom", e.target.files?.[0])} />}
         <span className="muted small">
-          {busy === "bottom" ? "Uploading…" : "One link per line. Empty = our own loops (bouncing balls, plinko, pendulum wave)"}
+          {busy === "bottom" ? "Uploading…" : "One link per line. Empty = the bottom video below"}
         </span>
       </label>
+      <label>
+        Bottom video (split screen)
+        <select value={c.bottom_kind || "race"} onChange={(e) => set("bottom_kind", e.target.value)}>
+          <option value="race">Ball race (made for each clip, the winner crosses the line at the end)</option>
+          <option value="mix">Satisfying loops in turn</option>
+          <option value="bounce">Bouncing balls</option>
+          <option value="plinko">Plinko</option>
+          <option value="pendulum">Pendulum wave</option>
+        </select>
+      </label>
+      <label>
+        Trending Shorts to re-cut (hashtags)
+        <input
+          key={(c.trend_tags || []).join("|")}
+          defaultValue={(c.trend_tags || []).join(", ")}
+          placeholder="evelone, buster, strogo"
+          onBlur={(e) => set("trend_tags", e.target.value.split(",").map((s) => s.trim().replace(/^#/, "")).filter(Boolean))}
+        />
+        <span className="muted small">
+          Every 4 h: the most-viewed Shorts (and Reels, with an Apify token) for these tags that nobody turned into a split screen
+          yet are re-cut as split-screen clips into Review. Needs YOUTUBE_API_KEY.
+        </span>
+      </label>
+      <label>
+        Trending: at least this many views
+        <input type="number" value={c.trend_min_views ?? 50000} onChange={(e) => set("trend_min_views", Number(e.target.value || 0))} />
+      </label>
       {err && <p className="error">{err}</p>}
+      {c.id && (c.trend_tags || []).length > 0 && <TrendList id={c.id} />}
+    </div>
+  );
+}
+
+const VERDICT: Record<string, string> = {
+  new: "re-cut",
+  split: "already a split screen",
+  taken: "someone split-screened it",
+  unchecked: "re-cut (not compared)",
+};
+
+function TrendList({ id }: { id: number }) {
+  const { data, error } = useApi<TrendVideo[]>(`/campaigns/${id}/trends`);
+  if (error) return <p className="error">{error}</p>;
+  if (!data) return null;
+  return (
+    <div className="span2">
+      <h4>Trending Shorts checked</h4>
+      {data.length === 0 ? (
+        <p className="muted small">None yet: the first check runs within 15 minutes of an active campaign getting hashtags.</p>
+      ) : (
+        <table className="small">
+          <thead>
+            <tr>
+              <th>Video</th>
+              <th>Views</th>
+              <th>Verdict</th>
+              <th>Clip</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((t) => (
+              <tr key={t.id}>
+                <td>
+                  <a href={t.url} target="_blank" rel="noreferrer">
+                    {t.title || t.video_id}
+                  </a>{" "}
+                  <span className="muted">
+                    #{t.tag} · {t.channel}
+                  </span>
+                </td>
+                <td>{t.views?.toLocaleString()}</td>
+                <td title={t.reason || ""}>
+                  {VERDICT[t.verdict] || t.verdict}
+                  {t.reason ? <div className="muted">{t.reason}</div> : null}
+                </td>
+                <td>{t.clip_id ? `#${t.clip_id}` : t.moment_status || "—"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 }
