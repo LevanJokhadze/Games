@@ -13,7 +13,10 @@ const EMPTY: Partial<Campaign> = {
   caption_template: "{hook}",
   captions: "word",
   title_secs: 5,
-  daily_quota: 3,
+  target_secs: 18,
+  teaser: true,
+  punch_zoom: true,
+  daily_quota: 2,
   min_clip_views: 100,
   lookback_hours: 48,
   overlay_width: 600,
@@ -128,7 +131,16 @@ function CampaignForm({ initial, onSaved }: { initial: Partial<Campaign>; onSave
         {number("overlay_width", "Overlay width (px of 1080)")}
         {number("overlay_y", "Overlay top (px of 1920)")}
         {text("cam_box", "Webcam box x:y:w:h (fractions)", "Empty = find the webcam automatically")}
-        {number("title_secs", "Title shown for (seconds, 0 = whole clip)")}
+        {number("title_secs", "Text hook shown for (seconds from 0:00)")}
+        {number("target_secs", "Clip length around the payoff (seconds, 15-20 works best)")}
+        <label className="inline">
+          <input type="checkbox" checked={c.teaser !== false} onChange={(e) => set("teaser", e.target.checked)} /> Open with a 2 s teaser of the
+          payoff, then play from the setup
+        </label>
+        <label className="inline">
+          <input type="checkbox" checked={c.punch_zoom !== false} onChange={(e) => set("punch_zoom", e.target.checked)} /> Punch-in zoom on the
+          payoff
+        </label>
         {text("submit_url", "Submit page (auto-submit)", "Content Rewards page with the Submit button; empty = Campaign page")}
         {number("submit_window_minutes", "Submit within (minutes of going live)")}
         {text("whop_bounty_id", "Whop bounty id (optional)", "bnty_… if this campaign is on Whop's API; pick it under Auto-submit")}

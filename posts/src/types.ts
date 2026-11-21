@@ -44,6 +44,8 @@ export interface Clip {
   source_url: string | null;
   source_title: string | null;
   campaign: string | null;
+  /** the on-screen hook burned into the first seconds */
+  hook_text?: string | null;
   posts: Post[];
 }
 
@@ -69,6 +71,10 @@ export interface Settings {
   workers_paused: boolean;
   slots_et: string[];
   max_posts_per_day: number;
+  /** per-platform daily caps, e.g. { youtube: 1 } */
+  max_per_day_by_service?: Record<string, number>;
+  /** minimum minutes between two posts on the same account */
+  min_gap_minutes?: number;
   stagger_minutes: number;
   services: string[];
 }
@@ -137,6 +143,12 @@ export interface Campaign {
   streamer_name: string | null;
   ended_at: string | null;
   end_reason: string | null;
+  /** clip length around the payoff (seconds) */
+  target_secs: number | null;
+  /** open with a 2 s teaser of the payoff */
+  teaser: boolean | null;
+  /** punch-in zooms on the payoff */
+  punch_zoom: boolean | null;
 }
 
 export interface EventRow {
@@ -299,5 +311,7 @@ export interface CalendarData {
   slots_local: string[];
   email_ready: boolean;
   manual_accounts: number;
+  /** the posting plan the workers follow */
+  plan?: { slots_local: string[]; per_day: Record<string, number>; min_gap_minutes: number; stagger_minutes: number };
   events: CalendarEvent[];
 }
