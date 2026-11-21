@@ -75,6 +75,19 @@ export default function Settings() {
               <input type="number" value={s.max_posts_per_day} onChange={(e) => setS({ ...s, max_posts_per_day: Number(e.target.value) })} />
             </label>
             <label>
+              Max YouTube posts per day
+              <input
+                type="number"
+                value={s.max_per_day_by_service?.youtube ?? s.max_posts_per_day}
+                onChange={(e) => setS({ ...s, max_per_day_by_service: { ...(s.max_per_day_by_service || {}), youtube: Number(e.target.value) } })}
+              />
+              <span className="muted small">More same-streamer Shorts in a day get fewer impressions each</span>
+            </label>
+            <label>
+              Min minutes between posts on one account
+              <input type="number" value={s.min_gap_minutes ?? 60} onChange={(e) => setS({ ...s, min_gap_minutes: Number(e.target.value) })} />
+            </label>
+            <label>
               Minutes between platforms
               <input type="number" value={s.stagger_minutes} onChange={(e) => setS({ ...s, stagger_minutes: Number(e.target.value) })} />
             </label>
@@ -92,6 +105,8 @@ export default function Settings() {
                   save({
                     slots_et: slots.split(",").map((x) => x.trim()).filter((x) => /^\d{1,2}:\d{2}$/.test(x)),
                     max_posts_per_day: s.max_posts_per_day,
+                    max_per_day_by_service: s.max_per_day_by_service,
+                    min_gap_minutes: s.min_gap_minutes,
                     stagger_minutes: s.stagger_minutes,
                     services: s.services,
                   })

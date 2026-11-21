@@ -81,6 +81,7 @@ function ClipCard({ clip, onChange }: { clip: Clip; onChange: () => void }) {
           )}
         </div>
         {clip.source_title && <div className="small">Viewer's clip title: “{clip.source_title}”</div>}
+        {clip.hook_text && <div className="small">Text hook on the video: “{clip.hook_text}”</div>}
         <label>
           Post title (YouTube and TikTok)
           <input value={title} onChange={(e) => setTitle(e.target.value)} disabled={!editable} />

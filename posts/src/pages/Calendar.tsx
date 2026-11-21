@@ -80,6 +80,7 @@ export default function Calendar() {
         grey items are posted by Buffer on their own. Click an item for the video and caption.
         {data && data.slots_local.length > 0 && <> Today's slots: {data.slots_local.join(", ")} Tbilisi.</>}
       </p>
+      {data?.plan && <PlanLine plan={data.plan} />}
 
       {data && !data.email_ready && data.manual_accounts > 0 && (
         <div className="banner warn">Email isn't set up on the server, so no reminder emails go out. Follow this calendar instead.</div>
@@ -286,5 +287,18 @@ function Details({ e, onClose, onChanged }: { e: CalendarEvent; onClose: () => v
         </div>
       )}
     </Modal>
+  );
+}
+
+/** The posting plan the workers follow, read from the server so it changes when Settings change. */
+function PlanLine({ plan }: { plan: NonNullable<CalendarData["plan"]> }) {
+  const per = Object.entries(plan.per_day)
+    .map(([pf, n]) => `${PLATFORM[pf] || pf} ${n}`)
+    .join(", ");
+  const gap = plan.min_gap_minutes >= 60 ? `${Math.round((plan.min_gap_minutes / 60) * 10) / 10} h` : `${plan.min_gap_minutes} min`;
+  return (
+    <p className="muted small">
+      Plan: posts a day per account: {per}. At least {gap} between posts on one account, platforms {plan.stagger_minutes} min apart.
+    </p>
   );
 }
