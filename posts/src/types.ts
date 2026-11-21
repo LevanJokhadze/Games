@@ -160,12 +160,34 @@ export interface Campaign {
   title_template: string | null;
   /** sponsor banner video (BigBalls): inserted at the payoff with the clip paused; null = no banner */
   banner_url: string | null;
-  /** banner width in px of 1080 */
+  /** banner width in px of 1080 (may be wider: the frame crops it); 0 = fit the banner's artwork to the clip width */
   banner_width: number | null;
   /** key colour like 0x00FF00; empty = automatic (alpha channel or the corner colour), "none" = no keying */
   banner_key: string | null;
   /** split layout: bottom videos to use instead of the built-in satisfying loops */
   bottom_urls: string[];
+  /** split layout bottom when bottom_urls is empty: race (drawn per clip), mix, bounce, plinko, pendulum */
+  bottom_kind: string;
+  /** hashtags whose most-viewed Shorts/Reels nobody split-screened yet get re-cut into Review */
+  trend_tags: string[];
+  trend_min_views: number;
+}
+
+export interface TrendVideo {
+  id: number;
+  platform: string;
+  video_id: string;
+  url: string;
+  title: string;
+  channel: string;
+  tag: string;
+  views: number;
+  verdict: "new" | "split" | "taken" | "unchecked";
+  reason: string | null;
+  checked_at: string;
+  moment_id: number | null;
+  moment_status: string | null;
+  clip_id: number | null;
 }
 
 export interface EventRow {
