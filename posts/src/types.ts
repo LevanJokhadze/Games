@@ -86,6 +86,7 @@ export interface Overview {
   submit_failed: number;
   workers: Heartbeat[];
   settings: Settings;
+  campaigns?: Pick<Campaign, "id" | "name" | "url" | "cpm" | "min_payout" | "max_payout" | "active" | "ended_at" | "end_reason">[];
 }
 
 export interface Analytics {
@@ -133,6 +134,9 @@ export interface Campaign {
   whop_bounty_id: string | null;
   submit_url: string | null;
   submit_window_minutes: number | null;
+  streamer_name: string | null;
+  ended_at: string | null;
+  end_reason: string | null;
 }
 
 export interface EventRow {

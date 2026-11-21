@@ -32,6 +32,24 @@ export default function Overview() {
       )}
       {data.settings.workers_paused && <div className="banner warn">Workers are paused. Turn them back on under Workers & settings.</div>}
 
+      {data.campaigns && (
+        <p className="muted small">
+          {data.campaigns.filter((c) => c.active).length === 0 ? (
+            <>
+              No active campaign: nothing new is cut. <a href="#campaigns">Turn one on</a>
+            </>
+          ) : (
+            <>
+              Clipping for{" "}
+              {data.campaigns
+                .filter((c) => c.active)
+                .map((c) => `${c.name} (${money(Number(c.cpm))}/1K, min ${money(Number(c.min_payout))}${c.max_payout != null ? `, max ${money(Number(c.max_payout))}` : ""})`)
+                .join(" · ")}
+              . Earnings use each post's own campaign rate.
+            </>
+          )}
+        </p>
+      )}
       <div className="kpis">
         <Kpi label="Views (all live posts)" value={num(data.totals.views)} />
         <Kpi label="Estimated earnings" value={money(data.est_earnings)} hint={`${data.paying_posts} post(s) over the campaign minimum`} />

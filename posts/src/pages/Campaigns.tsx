@@ -80,13 +80,28 @@ function CampaignForm({ initial, onSaved }: { initial: Partial<Campaign>; onSave
       }}
     >
       <div className="row between">
-        <h2>{c.name || "New campaign"}</h2>
+        <h2>
+          {c.name || "New campaign"}{" "}
+          {c.ended_at ? <span className="pill bad">Ended</span> : c.id && !c.active ? <span className="pill warn">Paused</span> : null}
+        </h2>
         <label className="inline">
-          <input type="checkbox" checked={!!c.active} onChange={(e) => set("active", e.target.checked)} /> Active
+          <input
+            type="checkbox"
+            checked={!!c.active}
+            onChange={(e) => setC((x) => ({ ...x, active: e.target.checked, ...(e.target.checked ? { ended_at: null, end_reason: null } : {}) }))}
+          />{" "}
+          Active
         </label>
       </div>
+      {c.ended_at && (
+        <p className="muted small">
+          Ended {new Date(c.ended_at).toLocaleDateString()}
+          {c.end_reason ? `: ${c.end_reason}` : ""} Its clips and posts are kept, and live posts are still counted at its current rate.
+        </p>
+      )}
       <div className="formgrid">
         {text("name", "Name", "Start with the streamer's name as written, e.g. “KreekCraft GTA 6 Clipping”")}
+        {text("streamer_name", "Streamer name", "As written in titles, e.g. “Bobby VanRiper”")}
         {text("url", "Campaign page")}
         <label>
           Twitch channels
