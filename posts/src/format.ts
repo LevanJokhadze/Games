@@ -3,13 +3,22 @@ export const num = (n: number | null | undefined) =>
 
 export const money = (n: number | null | undefined) => `$${(Number(n) || 0).toFixed(2)}`;
 
-/** Time in the viewer's zone plus US Eastern, since posting slots are planned in ET. */
-export function when(iso: string | null | undefined): string {
+/** Short name of a posting timezone: "ET" for US Eastern, else its city ("Moscow"). */
+export const zoneName = (tz?: string | null) => (!tz || tz === "America/New_York" ? "ET" : tz.split("/").pop()!.replace(/_/g, " "));
+
+/** Time in the viewer's zone plus the audience's zone the slot was planned in (US Eastern unless `tz` is given). */
+export function when(iso: string | null | undefined, tz?: string | null): string {
   if (!iso) return "–";
   const d = new Date(iso);
   const local = d.toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-  const et = d.toLocaleString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" });
-  return `${local} (${et} ET)`;
+  const zone = tz || "America/New_York";
+  let there: string;
+  try {
+    there = d.toLocaleString(zone === "America/New_York" ? "en-US" : "en-GB", { timeZone: zone, hour: zone === "America/New_York" ? "numeric" : "2-digit", minute: "2-digit" });
+  } catch {
+    return local;
+  }
+  return `${local} (${there} ${zoneName(zone)})`;
 }
 
 export function ago(iso: string | null | undefined): string {

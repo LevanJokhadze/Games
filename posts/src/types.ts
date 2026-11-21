@@ -77,6 +77,8 @@ export interface Settings {
   min_gap_minutes?: number;
   stagger_minutes: number;
   services: string[];
+  /** per-geo posting slots in the geo's own timezone, e.g. { RU: { tz: "Europe/Moscow", slots: ["15:00","20:00"] } } */
+  geo_slots?: Record<string, { tz: string; slots: string[] }>;
 }
 
 export interface Overview {
@@ -238,6 +240,8 @@ export interface ManualInfo {
   /** day of manual uploads, 1 on the first day */
   day: number;
   next_at: string | null;
+  /** timezone this account's slots are planned in (its geo's, default America/New_York) */
+  slot_tz?: string | null;
   uploads: ManualUpload[];
 }
 
@@ -291,6 +295,9 @@ export interface CalendarEvent {
   day: string;
   time: string;
   time_et: string;
+  /** the same time where the account's audience is, and that zone's name ("US Eastern", "Moscow") */
+  slot_time?: string;
+  slot_zone?: string;
   platform: string;
   handle: string | null;
   account_id: number | null;
@@ -319,6 +326,13 @@ export interface CalendarData {
   email_ready: boolean;
   manual_accounts: number;
   /** the posting plan the workers follow */
-  plan?: { slots_local: string[]; per_day: Record<string, number>; min_gap_minutes: number; stagger_minutes: number };
+  plan?: {
+    slots_local: string[];
+    per_day: Record<string, number>;
+    min_gap_minutes: number;
+    stagger_minutes: number;
+    /** other geos' own slots: their zone, the slots there and the same slots in Tbilisi time */
+    geo_slots?: Record<string, { zone: string; slots: string[]; local: string[] }>;
+  };
   events: CalendarEvent[];
 }

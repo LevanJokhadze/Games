@@ -381,7 +381,7 @@ function Uploads({ a, onEdit, onChanged }: { a: Account; onEdit: () => void; onC
               <b>Day {m.day}</b> <span className="muted">of {WEEK_DAYS}</span>
               <span className="muted">
                 {" · "}
-                {!live ? `no emails while ${a.status}` : m.next_at ? `next email ${when(m.next_at)}` : "no slot left today"}
+                {!live ? `no emails while ${a.status}` : m.next_at ? `next email ${when(m.next_at, m.slot_tz)}` : "no slot left today"}
               </span>
             </div>
             <div className="weekbar" aria-hidden="true">
