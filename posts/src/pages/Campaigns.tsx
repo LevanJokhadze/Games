@@ -18,6 +18,9 @@ const EMPTY: Partial<Campaign> = {
   teaser: true,
   punch_zoom: true,
   layout: "react",
+  language: "en",
+  geo: "",
+  title_template: "{title}",
   daily_quota: 2,
   min_clip_views: 100,
   lookback_hours: 48,
@@ -113,13 +116,22 @@ function CampaignForm({ initial, onSaved }: { initial: Partial<Campaign>; onSave
           <input value={(c.channels || []).join(", ")} onChange={(e) => set("channels", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} />
           <span className="muted small">Comma-separated logins, e.g. kreekcraft</span>
         </label>
-        {text("game", "Game on Twitch", "Clips from other games are skipped")}
+        {text("game", "Game on Twitch", "Clips from other games are skipped; empty = any game")}
+        <label>
+          Language
+          <select value={c.language || "en"} onChange={(e) => set("language", e.target.value)}>
+            <option value="en">English</option>
+            <option value="ru">Russian (titles, hooks and captions in Russian)</option>
+          </select>
+        </label>
+        {text("geo", "Accounts geo", "Geo code from the Accounts page, e.g. RU: only that geo's accounts get these clips. Empty = the US accounts")}
         {number("cpm", "$ per 1K views")}
         {number("min_payout", "Minimum payout per clip ($)")}
         {number("max_payout", "Maximum payout per clip ($)")}
         {number("daily_quota", "Clips to cut per day")}
         {number("min_clip_views", "Min Twitch clip views")}
         {number("lookback_hours", "Only clips newer than (hours)")}
+        {text("title_template", "Title template", "{title} is replaced by the AI title, e.g. “twitch: evelone2004 {title} #evelone”")}
         {text("caption_template", "Caption template", "{hook} is replaced by the clip's hook line")}
         <label>
           Captions on video
