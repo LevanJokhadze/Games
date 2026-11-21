@@ -18,7 +18,7 @@ export default function AutoSubmit() {
   const [testing, setTesting] = useState(false);
   const [test, setTest] = useState<{ ok: boolean; error?: string; screenshot?: string | null } | null>(null);
   const [bounties, setBounties] = useState<WhopBounty[] | null>(null);
-  const [query, setQuery] = useState("KreekCraft");
+  const [query, setQuery] = useState("GTA");
 
   if (error) return <section className="card"><p className="error">{error}</p></section>;
   if (!s) return <section className="card"><p className="muted">Loading…</p></section>;
