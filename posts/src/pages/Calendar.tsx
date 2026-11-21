@@ -79,6 +79,13 @@ export default function Calendar() {
         When to post, in Tbilisi time. Each dot's colour is the platform. <b>Orange</b> items are yours to upload by hand (you also get an email 10 minutes before);
         grey items are posted by Buffer on their own. Click an item for the video and caption.
         {data && data.slots_local.length > 0 && <> Today's slots: {data.slots_local.join(", ")} Tbilisi.</>}
+        {data?.plan?.geo_slots &&
+          Object.entries(data.plan.geo_slots).map(([code, g]) => (
+            <span key={code}>
+              {" "}
+              {code} accounts: {g.local.join(", ")} Tbilisi ({g.slots.join(", ")} {g.zone}).
+            </span>
+          ))}
       </p>
       {data?.plan && <PlanLine plan={data.plan} />}
 
@@ -154,7 +161,7 @@ export default function Calendar() {
             <button key={i} className={`cal-row ${e.kind}`} onClick={() => setPicked(e)}>
               <span className="cal-bigtime">
                 {e.time}
-                <span className="muted small">{e.time_et} ET</span>
+                <span className="muted small">{e.slot_time || e.time_et} {e.slot_zone && e.slot_zone !== "US Eastern" ? e.slot_zone : "ET"}</span>
               </span>
               {e.thumb_url ? <img src={e.thumb_url} alt="" /> : <span className="cal-nothumb" />}
               <span className="cal-rowbody">
@@ -207,7 +214,7 @@ function Details({ e, onClose, onChanged }: { e: CalendarEvent; onClose: () => v
           <b>
             {fmt(e.day, { weekday: "long", day: "numeric", month: "long" })}, {e.time}
           </b>{" "}
-          Tbilisi <span className="muted">({e.time_et} US Eastern, {inMinutes(e.at)})</span>
+          Tbilisi <span className="muted">({e.slot_time || e.time_et} {e.slot_zone || "US Eastern"}, {inMinutes(e.at)})</span>
         </dd>
         <dt>Account</dt>
         <dd>

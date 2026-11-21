@@ -70,6 +70,17 @@ export default function Settings() {
               Posting times, US Eastern (HH:MM, comma-separated)
               <input value={slots} onChange={(e) => setSlots(e.target.value)} />
             </label>
+            {Object.entries(s.geo_slots || {}).map(([code, g]) => (
+              <label key={code}>
+                Posting times for {code} accounts, {g.tz.split("/").pop()!.replace(/_/g, " ")} time (HH:MM, comma-separated)
+                <input
+                  value={g.slots.join(", ")}
+                  onChange={(e) =>
+                    setS({ ...s, geo_slots: { ...s.geo_slots, [code]: { ...g, slots: e.target.value.split(",").map((x) => x.trim()) } } })
+                  }
+                />
+              </label>
+            ))}
             <label>
               Max posts per channel per day
               <input type="number" value={s.max_posts_per_day} onChange={(e) => setS({ ...s, max_posts_per_day: Number(e.target.value) })} />
@@ -104,6 +115,13 @@ export default function Settings() {
                 onClick={() =>
                   save({
                     slots_et: slots.split(",").map((x) => x.trim()).filter((x) => /^\d{1,2}:\d{2}$/.test(x)),
+                    ...(s.geo_slots
+                      ? {
+                          geo_slots: Object.fromEntries(
+                            Object.entries(s.geo_slots).map(([code, g]) => [code, { ...g, slots: g.slots.filter((x) => /^\d{1,2}:\d{2}$/.test(x)) }]),
+                          ),
+                        }
+                      : {}),
                     max_posts_per_day: s.max_posts_per_day,
                     max_per_day_by_service: s.max_per_day_by_service,
                     min_gap_minutes: s.min_gap_minutes,
