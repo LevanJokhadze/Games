@@ -104,7 +104,7 @@ export interface ChatLine {
   sys?: SysNotice;
 }
 
-export type GameKind = "joker" | "bura";
+export type GameKind = "joker" | "bura" | "poker";
 
 export interface GameConfig {
   /** Which card game the room plays (older rooms: Joker). */
@@ -113,6 +113,10 @@ export interface GameConfig {
   khishti: number;
   /** Partners sit opposite: seats 0 & 2 against 1 & 3. */
   pairs: boolean;
+  /** Poker: table size (2-9). */
+  seats?: number;
+  /** Poker: big blind. */
+  bb?: number;
 }
 
 export interface RoomView {
@@ -127,7 +131,9 @@ export interface RoomView {
   serverTime: number;
   chat: ChatLine[];
   seats: (SeatView | null)[];
-  game: GameView | BuraView | null;
+  game: GameView | BuraView | PokerView | null;
+  /** Poker: chips won or lost by players who left the table. */
+  ledger?: { name: string; net: number }[];
   ratingChanges: (RatingChange | null)[] | null;
   matchId: string | null;
   accounts: boolean;
@@ -282,4 +288,61 @@ export interface Sheet {
   you: number | null;
   canEdit: boolean;
   mustConfirm: boolean;
+}
+
+// ---------- Poker (no-limit Texas Hold'em cash table) ----------
+
+export type PokerSaid = "fold" | "check" | "call" | "bet" | "raise" | "allin";
+
+export interface PokerShown {
+  seat: number;
+  cards: Card[];
+  cat: number;
+  best: Card[];
+}
+
+export interface PokerResult {
+  handNo: number;
+  board: Card[];
+  pots: { amount: number; winners: number[] }[];
+  shown: PokerShown[];
+  net: number[];
+  uncontested: boolean;
+}
+
+export interface PokerView {
+  kind: "poker";
+  phase: "waiting" | "betting" | "handOver";
+  handNo: number;
+  seats: number;
+  bb: number;
+  sb: number;
+  buyIn: number;
+  button: number;
+  sbSeat: number;
+  bbSeat: number;
+  street: 0 | 1 | 2 | 3;
+  board: Card[];
+  turn: number;
+  seated: boolean[];
+  stacks: number[];
+  bets: number[];
+  pot: number;
+  inHand: boolean[];
+  folded: boolean[];
+  said: (PokerSaid | null)[];
+  hole: (Card[] | null)[];
+  net: number[];
+  rebuy: boolean[];
+  result: PokerResult | null;
+  lastResult: PokerResult | null;
+  /** Your best hand category so far (from the flop). */
+  myHand: number | null;
+  toCall: number;
+  canCheck: boolean;
+  canCall: boolean;
+  canRaise: boolean;
+  minTo: number;
+  maxTo: number;
+  currentBet: number;
 }

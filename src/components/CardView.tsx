@@ -2,7 +2,7 @@ import type { Card, Suit } from "../types";
 import { JokerArt } from "./JokerArt";
 
 export const SUIT_SYMBOL: Record<Suit, string> = { S: "♠", H: "♥", D: "♦", C: "♣" };
-export const RANK_LABEL: Record<number, string> = { 6: "6", 7: "7", 8: "8", 9: "9", 10: "10", 11: "J", 12: "Q", 13: "K", 14: "A" };
+export const RANK_LABEL: Record<number, string> = { 2: "2", 3: "3", 4: "4", 5: "5", 6: "6", 7: "7", 8: "8", 9: "9", 10: "10", 11: "J", 12: "Q", 13: "K", 14: "A" };
 export const isRed = (s: Suit | null) => s === "H" || s === "D";
 
 interface Props {

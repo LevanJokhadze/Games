@@ -5,6 +5,7 @@ import type { Voice } from "../voice";
 import { Avatar } from "./Avatar";
 import { ChatBody, VoiceControl } from "./Chat";
 import { pts } from "../points";
+import { GAMES, gameLabel } from "./Home";
 
 interface Props {
   room: RoomView;
@@ -20,6 +21,7 @@ export function Lobby({ room, send, leave, voice }: Props) {
 
   const game = room.config.game ?? "joker";
   const bura = game === "bura";
+  const poker = game === "poker";
   const canShare = typeof navigator !== "undefined" && !!navigator.share;
 
   const copy = async () => {
@@ -115,8 +117,8 @@ export function Lobby({ room, send, leave, voice }: Props) {
       <section className="panel">
         <div className="field">
           <span>{t("chooseGame")}</span>
-          <div className="segmented" role="radiogroup" aria-label={t("chooseGame")}>
-            {(["joker", "bura"] as const).map((g) => (
+          <div className="segmented three" role="radiogroup" aria-label={t("chooseGame")}>
+            {GAMES.map((g) => (
               <button
                 key={g}
                 role="radio"
@@ -125,13 +127,43 @@ export function Lobby({ room, send, leave, voice }: Props) {
                 disabled={!room.isHost}
                 onClick={() => send({ t: "config", config: { game: g } })}
               >
-                {g === "joker" ? `★ ${t("gameJoker")}` : `🂡 ${t("gameBura")}`}
+                {gameLabel(t, g)}
               </button>
             ))}
           </div>
           {bura && <p className="hint left">{t("buraHint")}</p>}
+          {poker && <p className="hint left">{t("pokerHint")}</p>}
         </div>
-        {!bura && (<>
+        {poker && (
+          <>
+            <label className="field">
+              <span>{t("pTableSize")}</span>
+              <select
+                value={room.config.seats ?? room.seats.length}
+                disabled={!room.isHost}
+                onChange={(e) => send({ t: "config", config: { seats: Number(e.target.value) } })}
+              >
+                {[2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </select>
+            </label>
+            <label className="field">
+              <span>{t("pBlinds")}</span>
+              <select
+                value={room.config.bb ?? 20}
+                disabled={!room.isHost}
+                onChange={(e) => send({ t: "config", config: { bb: Number(e.target.value) } })}
+              >
+                {[10, 20, 50, 100].map((bb) => (
+                  <option key={bb} value={bb}>{bb / 2} / {bb}</option>
+                ))}
+              </select>
+              <small className="hint left">{t("pBuyIn", { n: ((room.config.bb ?? 20) * 100).toLocaleString("en-US") })}</small>
+            </label>
+          </>
+        )}
+        {!bura && !poker && (<>
         <div className="field">
           <span>{t("pairs")}</span>
           <div className="segmented" role="radiogroup" aria-label={t("pairs")}>

@@ -33,6 +33,12 @@ drawn with CSS and inline SVG (the jokers are an original jester drawing, `src/c
   are shown face down to the others. The strip shows the match score to 11; tap it for every
   round. Rules: `src/components/Rules.tsx` / `buraRules` in `src/i18n.ts`, table: `src/components/BuraTable.tsx`.
   Needs the GamesBack version with Bura (merge both together).
+- **Poker** (no-limit Texas Hold'em cash table, 2-9 seats, play chips, not rated): third choice on the home
+  screen and in the lobby (table size and blinds there). Friends who open the room link mid-game sit down
+  at a free seat or in a bot's place; the ☰ menu shows everyone's chips won/lost, stand up, and (host) end
+  the game. Portrait phones use a seat layout that keeps the board clear; landscape puts your cards and
+  buttons on the right. Table: `src/components/PokerTable.tsx`, rules: `pokerRules` in `src/i18n.ts`.
+  Needs the GamesBack version with poker (merge both together).
 - **Score sheet for games played in person** (`#/sheet/new`, `src/components/Sheet.tsx`): pick the
   four players from registered accounts (search or "you've played with"), seating order, who deals
   first, game type, khishti and pairs. Each deal: tap what everyone said (dealer's forbidden number
