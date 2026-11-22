@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { createRoom, fetchSheets, getToken, logout, updateMe } from "../api";
-import { useI18n } from "../i18n";
+import { T, useI18n } from "../i18n";
 import type { Theme } from "../theme";
-import type { Profile, Sheet } from "../types";
+import type { GameKind, Profile, Sheet } from "../types";
 import { SheetBanners } from "./Sheet";
 import { Avatar } from "./Avatar";
 import { Leaderboard } from "./Leaderboard";
@@ -29,14 +29,15 @@ export function Home({ me, setMe, onLogout, go, nav, theme, setTheme }: Props) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [sheet, setSheet] = useState<SheetName>(null);
-  const [game, setGameState] = useState<"joker" | "bura">(() => {
+  const [game, setGameState] = useState<GameKind>(() => {
     try {
-      return localStorage.getItem("joker.game") === "bura" ? "bura" : "joker";
+      const g = localStorage.getItem("joker.game");
+      return g === "bura" || g === "poker" ? g : "joker";
     } catch {
       return "joker";
     }
   });
-  const setGame = (g: "joker" | "bura") => {
+  const setGame = (g: GameKind) => {
     setGameState(g);
     try {
       localStorage.setItem("joker.game", g);
@@ -92,19 +93,20 @@ export function Home({ me, setMe, onLogout, go, nav, theme, setTheme }: Props) {
       <SheetBanners sheets={sheets} open={(id) => nav(`#/sheet/${id}`)} />
 
       <section className="panel home-panel">
-        <div className="segmented game-switch" role="radiogroup" aria-label={t("chooseGame")}>
-          {(["joker", "bura"] as const).map((g) => (
+        <div className="segmented game-switch three" role="radiogroup" aria-label={t("chooseGame")}>
+          {GAMES.map((g) => (
             <button key={g} role="radio" aria-checked={game === g} className={game === g ? "on" : ""} onClick={() => setGame(g)}>
-              {g === "joker" ? `★ ${t("gameJoker")}` : `🂡 ${t("gameBura")}`}
+              {gameLabel(t, g)}
             </button>
           ))}
         </div>
         {game === "bura" && <p className="hint left">{t("buraHint")}</p>}
+        {game === "poker" && <p className="hint left">{t("pokerHint")}</p>}
         <button className="btn btn-primary btn-big" disabled={busy} onClick={() => create(true)}>
-          {game === "bura" ? t("playBura") : t("playBots")}
+          {game === "bura" ? t("playBura") : game === "poker" ? t("playPoker") : t("playBots")}
         </button>
         <button className="btn btn-big" disabled={busy} onClick={() => create(false)}>
-          {game === "bura" ? t("buraRoom") : t("createRoom")}
+          {game === "bura" ? t("buraRoom") : game === "poker" ? t("pokerRoom") : t("createRoom")}
         </button>
         <form
           className="join-row"
@@ -209,4 +211,10 @@ function ProfileSheet({ me, setMe, onLogout, onClose }: { me: Profile; setMe: (p
       </button>}
     </Modal>
   );
+}
+
+export const GAMES: GameKind[] = ["joker", "bura", "poker"];
+
+export function gameLabel(t: T, g: GameKind): string {
+  return g === "joker" ? `★ ${t("gameJoker")}` : g === "bura" ? `🂡 ${t("gameBura")}` : `♠ ${t("gamePoker")}`;
 }
