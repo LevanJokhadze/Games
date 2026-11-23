@@ -1,10 +1,13 @@
 // Push-to-talk voice chat: a WebRTC audio mesh between everyone at the table who joined voice.
 // Signalling (offers, answers, ICE candidates) goes through the room's WebSocket; the audio
-// itself flows directly between browsers.
+// itself flows directly between browsers when it can. When a direct link to someone isn't up
+// (often the case between phones on mobile data), their audio comes through the game server
+// instead (see voice-relay.ts), so people can always hear each other.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { API_URL } from "./api";
 import type { RoomView } from "./types";
+import { AudioRelay } from "./voice-relay";
 
 type Msg = { t: string; [k: string]: unknown };
 
@@ -49,7 +52,10 @@ export function useVoice(room: RoomView | null, send: (m: object) => void, subsc
   const [speaking, setSpeaking] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
   /** Connection to each other person in voice. */
-  const [links, setLinks] = useState<Record<string, LinkState>>({});
+  const [rtcLinks, setLinks] = useState<Record<string, LinkState>>({});
+  const rtcRef = useRef(rtcLinks);
+  rtcRef.current = rtcLinks;
+  const relay = useRef<AudioRelay | null>(null);
   const relays = useRef<RTCIceServer[]>([]);
   const setLink = (id: string, st: LinkState | null) =>
     setLinks((prev) => {
@@ -79,6 +85,7 @@ export function useVoice(room: RoomView | null, send: (m: object) => void, subsc
 
   /** Phones only start audio after a tap: retry any player that is still paused. */
   const resumeAudio = () => {
+    relay.current?.resume();
     for (const p of peers.current.values()) if (p.audio.srcObject && p.audio.paused) p.audio.play().catch(() => {});
   };
 
@@ -144,6 +151,12 @@ export function useVoice(room: RoomView | null, send: (m: object) => void, subsc
           });
           return;
         }
+        if (m.t === "pcm") {
+          const from = String(m.from);
+          // Play it unless that person's direct link is up (then the audio comes that way).
+          if (relay.current && rtcRef.current[from] !== "connected" && typeof m.d === "string") relay.current.play(from, m.d);
+          return;
+        }
         if (m.t !== "rtc" || !stream.current) return;
         const from = String(m.from);
         const data = (m.data ?? {}) as { description?: RTCSessionDescriptionInit; candidate?: RTCIceCandidateInit };
@@ -201,6 +214,7 @@ export function useVoice(room: RoomView | null, send: (m: object) => void, subsc
     tail.current = window.setTimeout(() => {
       tail.current = undefined;
       track.enabled = false;
+      relay.current?.setActive(false);
     }, 300);
   }, [send]);
 
@@ -213,12 +227,21 @@ export function useVoice(room: RoomView | null, send: (m: object) => void, subsc
       tail.current = undefined;
     } else if (track.enabled) return;
     track.enabled = true;
+    relay.current?.setActive(true);
     setTalking(true);
     send({ t: "talk", on: true });
   }, [send]);
 
   const join = useCallback(async () => {
     setError(null);
+    // Made inside the tap, so phones let it play sound.
+    let r0: AudioRelay | null = null;
+    try {
+      r0 = new AudioRelay((d) => send({ t: "pcm", d }));
+      r0.resume();
+    } catch (e) {
+      console.warn("voice relay unavailable", e);
+    }
     try {
       const [s, r] = await Promise.all([
         navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 } }),
@@ -227,9 +250,14 @@ export function useVoice(room: RoomView | null, send: (m: object) => void, subsc
       s.getAudioTracks().forEach((t) => (t.enabled = false));
       relays.current = r;
       stream.current = s;
+      if (r0) {
+        r0.attach(s);
+        relay.current = r0;
+      }
       setJoined(true);
       send({ t: "voice", on: true });
     } catch {
+      r0?.close();
       setError("mic");
     }
   }, [send]);
@@ -239,6 +267,8 @@ export function useVoice(room: RoomView | null, send: (m: object) => void, subsc
     for (const id of [...peers.current.keys()]) closePeer(id);
     stream.current?.getTracks().forEach((t) => t.stop());
     stream.current = null;
+    relay.current?.close();
+    relay.current = null;
     setJoined(false);
     send({ t: "voice", on: false });
   }, [send, stopTalk]);
@@ -279,13 +309,18 @@ export function useVoice(room: RoomView | null, send: (m: object) => void, subsc
       for (const id of [...peers.current.keys()]) closePeer(id);
       stream.current?.getTracks().forEach((t) => t.stop());
       stream.current = null;
+      relay.current?.close();
+      relay.current = null;
     },
     [],
   );
 
   const all = new Set(speaking);
   if (talking && me) all.add(me);
-  return { joined, join, leave, talking, startTalk, stopTalk, speaking: all, error, links };
+  // Everyone in voice can hear us, directly or through the server, so each one shows as connected.
+  const links: Record<string, LinkState> = {};
+  if (joined) for (const id of voicePeers) links[id] = "connected";
+  return { joined, join, leave, talking, startTalk, stopTalk, speaking: all, error, links, rtcLinks };
 }
 
 export type Voice = ReturnType<typeof useVoice>;

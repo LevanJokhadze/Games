@@ -209,7 +209,7 @@ export function useRoom(code: string, name: string, onAuthError?: () => void) {
         if (m.t === "state") {
           clockOffset.current = m.room.serverTime - Date.now();
           setRoom(m.room);
-        } else if (m.t === "rtc" || m.t === "talk") {
+        } else if (m.t === "rtc" || m.t === "talk" || m.t === "pcm") {
           listeners.current.forEach((fn) => fn(m));
         } else if (m.t === "error") {
           if (m.code === "auth") onAuthError?.();
