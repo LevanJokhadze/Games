@@ -32,7 +32,7 @@ export function Home({ me, setMe, onLogout, go, nav, theme, setTheme }: Props) {
   const [game, setGameState] = useState<GameKind>(() => {
     try {
       const g = localStorage.getItem("joker.game");
-      return g === "bura" || g === "poker" ? g : "joker";
+      return g === "bura" || g === "poker" || g === "backgammon" ? g : "joker";
     } catch {
       return "joker";
     }
@@ -93,7 +93,7 @@ export function Home({ me, setMe, onLogout, go, nav, theme, setTheme }: Props) {
       <SheetBanners sheets={sheets} open={(id) => nav(`#/sheet/${id}`)} />
 
       <section className="panel home-panel">
-        <div className="segmented game-switch three" role="radiogroup" aria-label={t("chooseGame")}>
+        <div className="segmented game-switch four" role="radiogroup" aria-label={t("chooseGame")}>
           {GAMES.map((g) => (
             <button key={g} role="radio" aria-checked={game === g} className={game === g ? "on" : ""} onClick={() => setGame(g)}>
               {gameLabel(t, g)}
@@ -102,11 +102,12 @@ export function Home({ me, setMe, onLogout, go, nav, theme, setTheme }: Props) {
         </div>
         {game === "bura" && <p className="hint left">{t("buraHint")}</p>}
         {game === "poker" && <p className="hint left">{t("pokerHint")}</p>}
+        {game === "backgammon" && <p className="hint left">{t("bgHint")}</p>}
         <button className="btn btn-primary btn-big" disabled={busy} onClick={() => create(true)}>
-          {game === "bura" ? t("playBura") : game === "poker" ? t("playPoker") : t("playBots")}
+          {game === "bura" ? t("playBura") : game === "poker" ? t("playPoker") : game === "backgammon" ? t("playBackgammon") : t("playBots")}
         </button>
         <button className="btn btn-big" disabled={busy} onClick={() => create(false)}>
-          {game === "bura" ? t("buraRoom") : game === "poker" ? t("pokerRoom") : t("createRoom")}
+          {game === "bura" ? t("buraRoom") : game === "poker" ? t("pokerRoom") : game === "backgammon" ? t("bgRoom") : t("createRoom")}
         </button>
         <form
           className="join-row"
@@ -213,8 +214,8 @@ function ProfileSheet({ me, setMe, onLogout, onClose }: { me: Profile; setMe: (p
   );
 }
 
-export const GAMES: GameKind[] = ["joker", "bura", "poker"];
+export const GAMES: GameKind[] = ["joker", "bura", "poker", "backgammon"];
 
 export function gameLabel(t: T, g: GameKind): string {
-  return g === "joker" ? `★ ${t("gameJoker")}` : g === "bura" ? `🂡 ${t("gameBura")}` : `♠ ${t("gamePoker")}`;
+  return g === "joker" ? `★ ${t("gameJoker")}` : g === "bura" ? `🂡 ${t("gameBura")}` : g === "poker" ? `♠ ${t("gamePoker")}` : `⚀ ${t("gameBackgammon")}`;
 }

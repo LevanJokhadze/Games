@@ -3497,3 +3497,314 @@ select {
   padding: 10px 2px;
   font-size: 0.84rem;
 }
+
+.segmented.four {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.segmented.four button {
+  padding: 10px 2px;
+  font-size: 0.8rem;
+}
+.segmented.four button {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Four games don't fit in one row on a phone: two rows of two. */
+@media (max-width: 460px) {
+  .segmented.four {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .segmented.four button {
+    font-size: 0.88rem;
+  }
+}
+
+/* ---------- Backgammon ---------- */
+.table-screen.backgammon {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+.bg-main {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas: "opp" "board" "me";
+  gap: 6px;
+  padding: 6px 6px 0;
+}
+.bg-board-wrap {
+  grid-area: board;
+  position: relative;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.bg-board {
+  width: 100%;
+  height: 100%;
+  max-width: 920px;
+  display: block;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.bg-board .frame {
+  fill: #5a3a1e;
+  stroke: rgba(0, 0, 0, 0.45);
+  stroke-width: 2;
+}
+.bg-board .field {
+  fill: #e8d7b0;
+}
+.bg-board .bar {
+  fill: #4a2f17;
+}
+.bg-board .tray {
+  fill: #3f2814;
+  stroke: rgba(0, 0, 0, 0.35);
+}
+.bg-board .tray-line {
+  stroke: rgba(255, 255, 255, 0.12);
+}
+.bg-board .tri-a {
+  fill: #9e2b25;
+}
+.bg-board .tri-b {
+  fill: #2f4a3a;
+}
+.bg-board .tri.last {
+  filter: brightness(1.35) saturate(1.2);
+}
+.bg-board .pt-num {
+  font-size: 9px;
+  fill: rgba(255, 255, 255, 0.55);
+  text-anchor: middle;
+  pointer-events: none;
+}
+.bg-point {
+  cursor: pointer;
+}
+.bg-board .chk {
+  stroke-width: 1.5;
+  pointer-events: none;
+  transition: cy 0.15s ease;
+}
+.chk-w {
+  fill: #fbf6ea;
+  stroke: #9b8a6a;
+}
+.chk-b {
+  fill: #2b2522;
+  stroke: #000;
+}
+.bg-board .chk.movable {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+}
+.bg-board .chk.selected {
+  stroke: #fff;
+  stroke-width: 3;
+  fill: var(--accent);
+  filter: drop-shadow(0 0 6px var(--accent));
+}
+.bg-board .chk-count {
+  font-size: 15px;
+  font-weight: 800;
+  text-anchor: middle;
+  pointer-events: none;
+}
+.chk-count.on-w {
+  fill: #2b2522;
+}
+.chk-count.on-b {
+  fill: #fbf6ea;
+}
+.bg-board .dest {
+  fill: color-mix(in srgb, var(--accent) 45%, transparent);
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-dasharray: 4 3;
+  pointer-events: none;
+  animation: bg-pulse 1s ease-in-out infinite alternate;
+}
+.bg-board .dest-zone {
+  fill: color-mix(in srgb, var(--accent) 30%, transparent);
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-dasharray: 4 3;
+  animation: bg-pulse 1s ease-in-out infinite alternate;
+}
+@keyframes bg-pulse {
+  from {
+    opacity: 0.55;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.bg-board .slab {
+  stroke-width: 1;
+  pointer-events: none;
+}
+.bg-board .off-count {
+  font-size: 12px;
+  font-weight: 700;
+  fill: #f3e7cc;
+  text-anchor: middle;
+  pointer-events: none;
+}
+.bg-board .cube rect {
+  fill: #fffdf8;
+  stroke: #333;
+  stroke-width: 1.5;
+}
+.bg-board .cube text {
+  font-size: 15px;
+  font-weight: 800;
+  text-anchor: middle;
+  fill: #1d2430;
+}
+.bg-board .cube.offered rect {
+  fill: var(--accent);
+  animation: bg-pulse 0.8s ease-in-out infinite alternate;
+}
+.bg-board .die rect {
+  stroke-width: 1.5;
+}
+.bg-board .die-w rect {
+  fill: #fffdf8;
+  stroke: #9b8a6a;
+}
+.bg-board .die-w circle {
+  fill: #1d2430;
+}
+.bg-board .die-b rect {
+  fill: #2b2522;
+  stroke: #000;
+}
+.bg-board .die-b circle {
+  fill: #fbf6ea;
+}
+.bg-board .die.used {
+  opacity: 0.35;
+}
+.bg-board .die {
+  pointer-events: none;
+}
+
+.bg-badge {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  border-radius: 12px;
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  min-width: 0;
+  overflow: hidden;
+}
+.bg-badge-opp {
+  grid-area: opp;
+}
+.bg-badge.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+.bg-badge.offline {
+  opacity: 0.7;
+}
+.bg-badge .timer-bar {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+}
+.bg-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid;
+  flex: none;
+}
+.bg-dot.chk-w {
+  background: #fbf6ea;
+  border-color: #9b8a6a;
+}
+.bg-dot.chk-b {
+  background: #2b2522;
+  border-color: #000;
+}
+.bg-name {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.bg-name .name-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bg-pips {
+  font-size: 0.78rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.bg-score {
+  font-size: 1.25rem;
+  min-width: 1.4em;
+  text-align: right;
+}
+.bg-me {
+  grid-area: me;
+  padding: 0 0 8px;
+}
+.bg-actions .btn-big {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 260px;
+}
+.bg-score-btn {
+  appearance: none;
+  border: 1px solid var(--panel-border);
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 4px 10px;
+  display: flex;
+  gap: 4px;
+  align-items: baseline;
+  cursor: pointer;
+}
+.bg-score-btn strong {
+  font-size: 1.05rem;
+}
+.bg-result {
+  min-width: min(260px, 80vw);
+}
+.bg-games td.won {
+  color: var(--accent);
+  font-weight: 700;
+}
+/* Phones held sideways: the board on the left, players and buttons on the right. */
+@media (orientation: landscape) and (max-height: 560px) {
+  .bg-main {
+    grid-template-columns: minmax(0, 1fr) minmax(200px, 34%);
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas: "board opp" "board me";
+    padding-bottom: 6px;
+  }
+  .bg-me {
+    justify-content: flex-end;
+    padding-bottom: 0;
+  }
+  .bg-actions .btn-big {
+    min-height: 44px;
+    padding: 8px 10px;
+    font-size: 0.9rem;
+    flex-basis: 40%;
+  }
+}

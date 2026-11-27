@@ -22,6 +22,7 @@ export function Lobby({ room, send, leave, voice }: Props) {
   const game = room.config.game ?? "joker";
   const bura = game === "bura";
   const poker = game === "poker";
+  const bg = game === "backgammon";
   const canShare = typeof navigator !== "undefined" && !!navigator.share;
 
   const copy = async () => {
@@ -117,7 +118,7 @@ export function Lobby({ room, send, leave, voice }: Props) {
       <section className="panel">
         <div className="field">
           <span>{t("chooseGame")}</span>
-          <div className="segmented three" role="radiogroup" aria-label={t("chooseGame")}>
+          <div className="segmented four" role="radiogroup" aria-label={t("chooseGame")}>
             {GAMES.map((g) => (
               <button
                 key={g}
@@ -133,7 +134,22 @@ export function Lobby({ room, send, leave, voice }: Props) {
           </div>
           {bura && <p className="hint left">{t("buraHint")}</p>}
           {poker && <p className="hint left">{t("pokerHint")}</p>}
+          {bg && <p className="hint left">{t("bgHint")}</p>}
         </div>
+        {bg && (
+          <label className="field">
+            <span>{t("bgMatchTo")}</span>
+            <select
+              value={room.config.matchTo ?? 5}
+              disabled={!room.isHost}
+              onChange={(e) => send({ t: "config", config: { matchTo: Number(e.target.value) } })}
+            >
+              {[1, 3, 5, 7, 11].map((n) => (
+                <option key={n} value={n}>{n === 1 ? t("bgPoint1") : t("bgPointsN", { n })}</option>
+              ))}
+            </select>
+          </label>
+        )}
         {poker && (
           <>
             <label className="field">
@@ -163,7 +179,7 @@ export function Lobby({ room, send, leave, voice }: Props) {
             </label>
           </>
         )}
-        {!bura && !poker && (<>
+        {!bura && !poker && !bg && (<>
         <div className="field">
           <span>{t("pairs")}</span>
           <div className="segmented" role="radiogroup" aria-label={t("pairs")}>
