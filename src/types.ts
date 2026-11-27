@@ -104,7 +104,7 @@ export interface ChatLine {
   sys?: SysNotice;
 }
 
-export type GameKind = "joker" | "bura" | "poker";
+export type GameKind = "joker" | "bura" | "poker" | "backgammon";
 
 export interface GameConfig {
   /** Which card game the room plays (older rooms: Joker). */
@@ -117,6 +117,8 @@ export interface GameConfig {
   seats?: number;
   /** Poker: big blind. */
   bb?: number;
+  /** Backgammon: match length in points. */
+  matchTo?: number;
 }
 
 export interface RoomView {
@@ -131,7 +133,7 @@ export interface RoomView {
   serverTime: number;
   chat: ChatLine[];
   seats: (SeatView | null)[];
-  game: GameView | BuraView | PokerView | null;
+  game: GameView | BuraView | PokerView | BgView | null;
   /** Poker: chips won or lost by players who left the table. */
   ledger?: { name: string; net: number }[];
   ratingChanges: (RatingChange | null)[] | null;
@@ -345,4 +347,58 @@ export interface PokerView {
   minTo: number;
   maxTo: number;
   currentBet: number;
+}
+
+// ---------- Backgammon (2 players, match play) ----------
+
+/** Board index 0-23 from seat 0's side, "bar" and "off" for the bar and borne-off checkers. */
+export type BgFrom = number | "bar";
+export type BgTo = number | "off";
+
+export interface BgStep {
+  from: BgFrom;
+  to: BgTo;
+  die: number;
+  hit?: boolean;
+}
+
+export interface BgGameResult {
+  winner: number;
+  /** 1 single game, 2 gammon, 3 backgammon. */
+  kind: 1 | 2 | 3;
+  cube: number;
+  points: number;
+  dropped: boolean;
+  score: [number, number];
+  crawford: boolean;
+}
+
+export interface BgView {
+  kind: "backgammon";
+  phase: "opening" | "roll" | "moving" | "doubled" | "gameOver" | "matchOver";
+  matchTo: number;
+  score: [number, number];
+  gameNo: number;
+  turn: number;
+  /** > 0 seat 0's checkers, < 0 seat 1's. */
+  board: number[];
+  bar: [number, number];
+  off: [number, number];
+  pips: [number, number];
+  dice: number[] | null;
+  left: number[];
+  opening: [number, number] | null;
+  moved: BgStep[];
+  lastTurn: { seat: number; dice: number[]; steps: BgStep[] } | null;
+  cube: number;
+  cubeOwner: number;
+  crawford: boolean;
+  games: BgGameResult[];
+  lastGame: BgGameResult | null;
+  legal: BgStep[];
+  canDouble: boolean;
+  canRoll: boolean;
+  canUndo: boolean;
+  canDone: boolean;
+  mustAnswer: boolean;
 }

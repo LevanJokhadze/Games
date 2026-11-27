@@ -8,6 +8,7 @@ import { Lobby } from "./components/Lobby";
 import { Table } from "./components/Table";
 import { BuraTable } from "./components/BuraTable";
 import { PokerTable } from "./components/PokerTable";
+import { BackgammonTable } from "./components/BackgammonTable";
 import { Lang, LangContext, makeT, useI18n } from "./i18n";
 import { useTheme } from "./theme";
 import { useVoice } from "./voice";
@@ -287,6 +288,8 @@ function RoomScreen({ code, name, leave, autostart, openMatch, onAuthError }: { 
       {error && <div className="toast" role="alert">{error}</div>}
       {room.status === "lobby" ? (
         <Lobby room={room} send={send} leave={leave} voice={voice} />
+      ) : room.game?.kind === "backgammon" ? (
+        <BackgammonTable room={room} send={send} leave={leave} clockOffset={clockOffset.current} openMatch={openMatch} voice={voice} />
       ) : room.game?.kind === "poker" ? (
         <PokerTable room={room} send={send} leave={leave} clockOffset={clockOffset.current} voice={voice} />
       ) : room.game?.kind === "bura" ? (

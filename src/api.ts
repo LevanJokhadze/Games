@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { GameConfig, GameRecord, Match, Profile, RoomView, Sheet, SheetDeal } from "./types";
+import type { GameConfig, GameKind, GameRecord, Match, Profile, RoomView, Sheet, SheetDeal } from "./types";
 
 const envUrl = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, "");
 export const API_URL =
@@ -146,7 +146,7 @@ export async function deleteSheet(s: Sheet): Promise<void> {
   await api(`/api/sheets/${s.id}`, { method: "DELETE" });
 }
 
-export async function createRoom(game: "joker" | "bura" | "poker" = "joker"): Promise<string> {
+export async function createRoom(game: GameKind = "joker"): Promise<string> {
   const res = await fetch(`${API_URL}/api/rooms`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ game }) });
   if (!res.ok) throw new Error("create failed");
   return ((await res.json()) as { code: string }).code;

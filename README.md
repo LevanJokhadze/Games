@@ -39,6 +39,12 @@ drawn with CSS and inline SVG (the jokers are an original jester drawing, `src/c
   the game. Portrait phones use a seat layout that keeps the board clear; landscape puts your cards and
   buttons on the right. Table: `src/components/PokerTable.tsx`, rules: `pokerRules` in `src/i18n.ts`.
   Needs the GamesBack version with poker (merge both together).
+- **Backgammon** (2 players, match to 1/3/5/7/11 points, default 5, rated): fourth choice on the home screen
+  and in the lobby. Doubling cube, gammons and backgammons, Crawford rule. Tap a checker, then where it goes
+  (a checker with only one place to go moves at once); Undo until Done. The board is an SVG that fits the
+  space it has: longer points on a phone held upright, board left and players right when it is held sideways.
+  Table: `src/components/BackgammonTable.tsx`, rules: `bgRules` in `src/i18n.ts`.
+  Needs the GamesBack version with backgammon (merge both together).
 - **Score sheet for games played in person** (`#/sheet/new`, `src/components/Sheet.tsx`): pick the
   four players from registered accounts (search or "you've played with"), seating order, who deals
   first, game type, khishti and pairs. Each deal: tap what everyone said (dealer's forbidden number
